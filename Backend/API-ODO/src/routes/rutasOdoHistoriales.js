@@ -1,12 +1,13 @@
-import express from "express";
-import { 
-    createHistorial, 
-    getHistorial, 
-    getHistorialById, 
-    updateHistorial, 
-    deleteHistorial 
-} from "../controller/controlOdoHistoriales.js";
-import { verifyJWT, verifyRole } from "../config/middlewareOdoAutenticacion.js";
+import express from 'express';
+import {
+  crearHistorial,
+  obtenerHistoriales,
+  obtenerHistorialPorId,
+  actualizarHistorial,
+  eliminarHistorial
+} from '../controller/controlOdoHistoriales.js';
+import { historialClinicoValidator } from '../validators/validatorsOdoHistorial.js';
+import { verifyJWT, verifyRole } from '../config/middlewareOdoAutenticacion.js';
 
 const router = express.Router();
 
@@ -14,7 +15,7 @@ const router = express.Router();
  * @swagger
  * tags:
  *   - name: Historiales
- *     description: Operaciones relacionadas con los historiales odontológicos
+ *     description: Endpoints para gestionar historiales clínicos
  */
 
 /**
@@ -24,44 +25,60 @@ const router = express.Router();
  *     Historial:
  *       type: object
  *       required:
- *         - Descripcion_tratamiento
- *         - Fecha_tratamiento
+ *         - paciente
+ *         - cita
+ *         - servicio
+ *         - doctora
+ *         - consultorio
+ *         - descripcionTratamiento
+ *         - fechaAtencion
  *       properties:
- *         Descripcion_tratamiento:
+ *         paciente:
  *           type: string
- *           description: Descripción detallada del tratamiento realizado.
- *         Fecha_tratamiento:
+ *           description: ID del paciente
+ *         cita:
+ *           type: string
+ *           description: ID de la cita asociada
+ *         servicio:
+ *           type: string
+ *           description: ID del servicio relacionado
+ *         doctora:
+ *           type: string
+ *           description: ID de la doctora responsable
+ *         consultorio:
+ *           type: string
+ *           description: ID del consultorio donde se atendió
+ *         descripcionTratamiento:
+ *           type: string
+ *           description: Descripción del tratamiento realizado
+ *         fechaAtencion:
  *           type: string
  *           format: date
- *           description: >-
- *             Fecha en la que se realizó el tratamiento. El formato debe ser
- *             YYYY-MM-DD.
- *         Id_servicio:
+ *           description: Fecha en la que se realizó la atención
+ *         observaciones:
  *           type: string
- *           format: uuid
- *           description: ID del servicio asociado al tratamiento.
- *         Id_usuario:
+ *           description: Observaciones adicionales
+ *         archivoAdjunto:
  *           type: string
- *           format: uuid
- *           description: ID del usuario que recibió el tratamiento.
- *         Id_doctora:
- *           type: string
- *           format: uuid
- *           description: ID de la doctora que realizó el tratamiento.
+ *           description: Ruta o URL del archivo adjunto
  *       example:
- *         Descripcion_tratamiento: "Limpieza dental y revisión general."
- *         Fecha_tratamiento: "2024-12-05"
- *         Id_servicio: "64fbc1234567890abcdef123"
- *         Id_usuario: "64fbc1234567890abcdef456"
- *         Id_doctora: "64fbc1234567890abcdef789"
+ *         paciente: "661acb937f31a7f4024ae1d4"
+ *         cita: "661acf1c7f31a7f4024ae1d5"
+ *         servicio: "661acf8f7f31a7f4024ae1d6"
+ *         doctora: "661acff97f31a7f4024ae1d7"
+ *         consultorio: "661ad0437f31a7f4024ae1d8"
+ *         descripcionTratamiento: "Limpieza dental profunda"
+ *         fechaAtencion: "2025-04-18"
+ *         observaciones: "Paciente con sensibilidad dental"
+ *         archivoAdjunto: "uploads/archivo.pdf"
  */
 
+// Crear historial
 /**
  * @swagger
- * /historial:
+ * /historiales:
  *   post:
- *     summary: Crear un nuevo historial odontológico
- *     description: Crear un historial de odontología con detalles como nombre, edad y género del paciente.
+ *     summary: Crear un nuevo historial clínico
  *     tags: [Historiales]
  *     requestBody:
  *       required: true
@@ -71,99 +88,93 @@ const router = express.Router();
  *             $ref: '#/components/schemas/Historial'
  *     responses:
  *       201:
- *         description: Historial creado exitosamente
+ *         description: Historial creado correctamente
  *       400:
- *         description: Error en la solicitud
+ *         description: Error de validación
  */
-router.post("/historial", createHistorial);
+router.post('/historiales', verifyJWT, verifyRole(['ADMIN', 'JEFE']), historialClinicoValidator, crearHistorial);
 
+// Obtener todos
 /**
  * @swagger
- * /historial:
+ * /historiales:
  *   get:
- *     summary: Obtener todos los historiales odontológicos
- *     description: Obtener una lista de todos los historiales registrados.
+ *     summary: Obtener todos los historiales clínicos
  *     tags: [Historiales]
  *     responses:
  *       200:
  *         description: Lista de historiales
- *       500:
- *         description: Error del servidor
  */
-router.get("/historial", getHistorial);
+router.get('/historiales', verifyJWT, verifyRole(['ADMIN', 'JEFE', 'RECEPCIONISTA']), obtenerHistoriales);
 
+// Obtener por ID
 /**
  * @swagger
- * /historial/{_id}:
+ * /historiales/{id}:
  *   get:
- *     summary: Obtener un historial odontológico por ID
- *     description: Obtener un historial específico por su ID.
+ *     summary: Obtener un historial clínico por ID
  *     tags: [Historiales]
  *     parameters:
- *       - name: _id
- *         in: path
+ *       - in: path
+ *         name: id
  *         required: true
- *         description: El ID del historial odontológico a recuperar
  *         schema:
  *           type: string
  *     responses:
  *       200:
- *         description: Historial encontrado exitosamente
+ *         description: Historial encontrado
  *       404:
- *         description: Historial no encontrado
+ *         description: No se encontró el historial
  */
-router.get("/historial/:_id", getHistorialById);
+router.get('/historiales/:id', verifyJWT, verifyRole(['ADMIN', 'JEFE', 'RECEPCIONISTA', 'PACIENTE']), obtenerHistorialPorId);
 
+// Actualizar historial
 /**
  * @swagger
- * /historial/{_id}:
+ * /historiales/{id}:
  *   patch:
- *     summary: Actualizar un historial odontológico
- *     description: Actualizar los detalles de un historial odontológico, incluyendo nombre, edad y género.
+ *     summary: Actualizar un historial clínico por ID
  *     tags: [Historiales]
  *     parameters:
- *       - name: _id
- *         in: path
+ *       - in: path
+ *         name: id
  *         required: true
- *         description: El ID del historial a actualizar
  *         schema:
  *           type: string
  *     requestBody:
- *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/Historial'
  *     responses:
  *       200:
- *         description: Historial actualizado exitosamente
+ *         description: Historial actualizado
  *       400:
- *         description: Error en la solicitud de actualización
+ *         description: Error de validación
  *       404:
- *         description: Historial no encontrado
+ *         description: No se encontró el historial
  */
-router.patch("/historial/:_id", updateHistorial);
+router.patch('/historiales/:id', verifyJWT, verifyRole(['ADMIN', 'JEFE']), historialClinicoValidator, actualizarHistorial);
 
+// Eliminar historial
 /**
  * @swagger
- * /historial/{_id}:
+ * /historiales/{id}:
  *   delete:
- *     summary: Eliminar un historial odontológico
- *     description: Eliminar un historial odontológico específico por su ID.
+ *     summary: Eliminar un historial clínico por ID
  *     tags: [Historiales]
  *     parameters:
- *       - name: _id
- *         in: path
+ *       - in: path
+ *         name: id
  *         required: true
- *         description: El ID del historial a eliminar
  *         schema:
  *           type: string
  *     responses:
  *       200:
- *         description: Historial eliminado exitosamente
+ *         description: Historial eliminado
  *       404:
- *         description: Historial no encontrado
+ *         description: No se encontró el historial
  */
-router.delete("/historial/:_id", deleteHistorial);
+router.delete('/historiales/:id', verifyJWT, verifyRole(['ADMIN']), eliminarHistorial);
 
 export default router;

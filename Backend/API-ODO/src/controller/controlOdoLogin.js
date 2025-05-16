@@ -13,31 +13,31 @@ const JWT_SECRET = process.env.JWT_SECRET;
 
 const Login = async (req, res) => {
   try {
-      
+    const { Correo, Clave } = req.body;
+
+    // Validar el esquema de login
     const { error } = loginSchema.validate(req.body);
     if (error) {
       return res.status(400).json({ message: error.details[0].message });
     }
 
-    const { Correo, Clave } = req.body;
-
-    const user = await userSchema.findOne({ Correo }).populate('Id_permiso');
+    // Buscar el usuario en la base de datos
+    const user = await userSchema.findOne({ Correo }).populate('Permiso');
     if (!user) {
       return res.status(400).json({ message: "Correo o clave incorrectos." });
-      
     }
-    console.log(user.Id_permiso.rol);
-    const rolNombre = user.Id_permiso.rol;
+
+    // Verificar la contraseña
     const isMatch = await bcrypt.compare(Clave, user.Clave);
     if (!isMatch) {
       return res.status(400).json({ message: "Correo o clave incorrectos." });
     }
 
+    // Generar el token
     const token = jwt.sign(
-      { id: user._id, Correo: user.Correo, Nombre: user.Nombre, Apellido: user.Apellido, Nombre_rol: rolNombre},
-      
-      JWT_SECRET,                          
-      { expiresIn: '6h' }                  
+      { id: user._id, Correo: user.Correo, Nombre: user.Nombre, Permiso: user.Permiso.rol },
+      JWT_SECRET,
+      { expiresIn: '6h' }
     );
 
     return res.status(200).json({ 

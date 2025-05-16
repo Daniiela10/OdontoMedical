@@ -69,7 +69,7 @@ const modelOdoServicios = express.Router();
  *       400:
  *         description: Error en la información del servicio.
  */
-modelOdoServicios.post("/servicio" ,createServicio);
+modelOdoServicios.post("/servicio", verifyJWT, verifyRole(['ADMIN', 'JEFE']), createServicio);;
 
 /**
  * @swagger
@@ -88,7 +88,7 @@ modelOdoServicios.post("/servicio" ,createServicio);
  *               items:
  *                 $ref: '#/components/schemas/Serv'
  */
-modelOdoServicios.get("/servicio", getServicio);
+modelOdoServicios.get("/servicio", verifyJWT, verifyRole(['ADMIN', 'JEFE', 'RECEPCIONISTA', 'PACIENTE']), getServicio);
 
 /**
  * @swagger
@@ -114,7 +114,7 @@ modelOdoServicios.get("/servicio", getServicio);
  *       404:
  *         description: Servicio no encontrado
  */
-modelOdoServicios.get("/servicio/:_id", getServicioId);
+modelOdoServicios.get("/servicio/:_id", verifyJWT, verifyRole(['ADMIN', 'JEFE', 'RECEPCIONISTA', 'PACIENTE']), getServicioId);
 
 /**
  * @swagger
@@ -144,7 +144,7 @@ modelOdoServicios.get("/servicio/:_id", getServicioId);
  *       404:
  *         description: Servicio no encontrado
  */
-modelOdoServicios.patch("/servicio/:_id", updateServicio);
+modelOdoServicios.patch("/servicio/:_id", verifyJWT, verifyRole(['ADMIN', 'JEFE']), updateServicio);
 
 /**
  * @swagger
@@ -166,7 +166,7 @@ modelOdoServicios.patch("/servicio/:_id", updateServicio);
  *       404:
  *         description: Servicio no encontrado
  */
-modelOdoServicios.delete("/servicio/:_id", deleteServicio);
+modelOdoServicios.delete("/servicio/:_id", verifyJWT, verifyRole(['ADMIN']), deleteServicio);
 
 export default modelOdoServicios;
 

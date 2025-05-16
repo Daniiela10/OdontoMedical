@@ -6,6 +6,7 @@ import {
     UpdateDoctora, 
     DeleteDoctora 
 } from "../controller/controlOdoDoctora.js";
+import { verifyJWT, verifyRole } from "../config/middlewareOdoAutenticacion.js";
 
 const router = express.Router();  
 
@@ -92,7 +93,7 @@ const router = express.Router();
  *             example:
  *               message: "Datos obligatorios faltantes."
  */
-router.post("/doctora", CreateDoctora);
+router.post("/doctora", verifyJWT, verifyRole(['ADMIN', 'JEFE']), CreateDoctora);
 
 /**
  * @swagger
@@ -112,7 +113,7 @@ router.post("/doctora", CreateDoctora);
  *               items:
  *                 $ref: '#/components/schemas/Doctora'
  */
-router.get("/doctora", BuscarDoctora);
+router.get("/doctora", verifyJWT, verifyRole(['ADMIN', 'JEFE', 'RECEPCIONISTA']), BuscarDoctora);
 
 /**
  * @swagger
@@ -139,7 +140,7 @@ router.get("/doctora", BuscarDoctora);
  *       404:
  *         description: No se encontró la doctora con ese ID
  */
-router.get("/doctora/:_id", BuscarDoctoraID);
+router.get("/doctora/:_id", verifyJWT, verifyRole(['ADMIN', 'JEFE', 'RECEPCIONISTA', 'PACIENTE']), BuscarDoctoraID);
 
 /**
  * @swagger
@@ -183,7 +184,7 @@ router.get("/doctora/:_id", BuscarDoctoraID);
  *       400:
  *         description: Error en los datos enviados para la actualización
  */
-router.patch("/doctora/:_id", UpdateDoctora);
+router.patch("/doctora/:_id", verifyJWT, verifyRole(['ADMIN', 'JEFE']), UpdateDoctora);
 
 /**
  * @swagger
@@ -206,6 +207,6 @@ router.patch("/doctora/:_id", UpdateDoctora);
  *       404:
  *         description: No se encontró la doctora con ese ID
  */
-router.delete("/doctora/:_id", DeleteDoctora);
+router.delete("/doctora/:_id", verifyJWT, verifyRole(['ADMIN']), DeleteDoctora);
 
 export default router;

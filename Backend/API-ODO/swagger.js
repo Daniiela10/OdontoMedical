@@ -15,16 +15,29 @@ const swaggerDocs = (app, port) => {
           url: `http://localhost:${port}/api`
         }
       ],
+      components: {
+        securitySchemes: {
+          bearerAuth: {
+            type: "http",
+            scheme: "bearer",
+            bearerFormat: "JWT"
+          }
+        }
+      },
+      security: [
+        {
+          bearerAuth: []
+        }
+      ]
     },
     apis: [ 
-
       "./src/routes/rutasOdoUser.js",       
       "./src/routes/rutasOdoPermisos.js", 
       "./src/routes/rutasOdoServicios.js",  
       "./src/routes/rutasOdoHistoriales.js", 
       "./src/routes/rutasOdoConsultorios.js", 
       "./src/routes/rutasOdoDoctora.js",
-      "./src/routes/rutasOdoCitas.js", // Documentación de las rutas de citas
+      "./src/routes/rutasOdoCitas.js",
       "./src/routes/rutasOdoLogin.js"
     ]
   };

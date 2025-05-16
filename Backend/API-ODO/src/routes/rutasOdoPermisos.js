@@ -6,6 +6,7 @@ import {
     getPermisos, 
     getPermisoById 
 } from "../controller/controlOdoPermisos.js";
+import { verifyJWT, verifyRole } from "../config/middlewareOdoAutenticacion.js";
 
 const modelOdoPermisos = express.Router();
 
@@ -49,7 +50,7 @@ const modelOdoPermisos = express.Router();
  *       400:
  *         description: Error en la información del permiso
  */
-modelOdoPermisos.post("/permisos", createPermiso);
+modelOdoPermisos.post("/permisos", verifyJWT, verifyRole(['ADMIN']), createPermiso);
 
 /**
  * @swagger
@@ -68,7 +69,7 @@ modelOdoPermisos.post("/permisos", createPermiso);
  *               items:
  *                 $ref: '#/components/schemas/Permiso'
  */
-modelOdoPermisos.get("/permisos", getPermisos);
+modelOdoPermisos.get("/permisos", verifyJWT, verifyRole(['ADMIN', 'JEFE']), getPermisos);
 
 /**
  * @swagger
@@ -94,7 +95,7 @@ modelOdoPermisos.get("/permisos", getPermisos);
  *       404:
  *         description: Permiso no encontrado
  */
-modelOdoPermisos.get("/permisos/:_id", getPermisoById);
+modelOdoPermisos.get("/permisos/:_id", verifyJWT, verifyRole(['ADMIN', 'JEFE']), getPermisoById);
 
 /**
  * @swagger
@@ -124,7 +125,7 @@ modelOdoPermisos.get("/permisos/:_id", getPermisoById);
  *       404:
  *         description: Permiso no encontrado
  */
-modelOdoPermisos.patch("/permisos/:_id", updatePermiso);
+modelOdoPermisos.patch("/permisos/:_id", verifyJWT, verifyRole(['ADMIN']), updatePermiso);
 
 /**
  * @swagger
@@ -146,7 +147,7 @@ modelOdoPermisos.patch("/permisos/:_id", updatePermiso);
  *       404:
  *         description: Permiso no encontrado
  */
-modelOdoPermisos.delete("/permisos/:_id", deletePermiso);
+modelOdoPermisos.delete("/permisos/:_id", verifyJWT, verifyRole(['ADMIN']), deletePermiso);
 
 export default modelOdoPermisos;
 

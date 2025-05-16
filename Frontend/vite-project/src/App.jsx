@@ -1,60 +1,82 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import AdminHome from './components/AdminHome';
-import Usuarios from './page/ADMIN/TablaUser';
-import Permisos from './page/ADMIN/TablaPermisos';
-import Servicios from './page/ADMIN/TablaServicios';
-import Historiales from './page/ADMIN/TablaHistoriales';
-import Consultorios from './page/ADMIN/TablaConsultorios';
-import Doctores from './page/ADMIN/TablaDoctores';
-import Citas from './page/ADMIN/TablaCitas';
-
-// Importaciones para las rutas de "Jefe"
-import JefeHome from './components/JefeHome';
-import JefeUsuarios from './page/JEFE/TablaUser';
-import JefePermisos from './page/JEFE/TablaPermisos';
-import JefeServicios from './page/JEFE/TablaServicios';
-import JefeHistoriales from './page/JEFE/TablaHistoriales';
-import JefeConsultorios from './page/JEFE/TablaConsultorios';
-import JefeDoctores from './page/JEFE/TablaDoctores';
-
-// Importaciones para las rutas de "Recepcionista"
-import RecepcionistaHome from './components/RecepcionistaHome';
-import RecepcionistaUsuarios from './page/RECEPCIONISTA/TablaUser';
-import RecepcionistaHistoriales from './page/RECEPCIONISTA/TablaHistoriales';
-import RecepcionistaConsultorios from './page/RECEPCIONISTA/TablaConsultorios';
+import PrivateRoute from './components/PrivateRoute';
+import TablaUsuarios from './components/TablaUser';
+import TablaPermisos from './components/TablaPermisos';
+import TablaServicios from './components/TablaServicios';
+import TablaConsultorios from './components/TablaConsultorios';
+import TablaDoctores from './components/TablaDoctores';
+import TablaCitas from './components/TablaCitas';
+import TablaHistoriales from './components/TablaHistoriales';
+import Login from './components/Login';
+import Register from './components/Register';
 
 const App = () => {
   return (
     <Router>
       <Routes>
         {/* Rutas para ADMIN */}
-        <Route path="/admin" element={<AdminHome />} />
-        <Route path="/admin/usuarios" element={<Usuarios />} />
-        <Route path="/admin/permisos" element={<Permisos />} />
-        <Route path="/admin/servicios" element={<Servicios />} />
-        <Route path="/admin/citas" element={<Citas />} />
-        <Route path="/admin/historiales" element={<Historiales />} />
-        <Route path="/admin/consultorios" element={<Consultorios />} />
-        <Route path="/admin/doctores" element={<Doctores />} />
+        <Route path="/admin/usuarios" element={
+          <PrivateRoute roles={["ADMIN"]}><TablaUsuarios /></PrivateRoute>
+        } />
+        <Route path="/admin/permisos" element={
+          <PrivateRoute roles={["ADMIN"]}><TablaPermisos /></PrivateRoute>
+        } />
+        <Route path="/admin/servicios" element={
+          <PrivateRoute roles={["ADMIN"]}><TablaServicios /></PrivateRoute>
+        } />
+        <Route path="/admin/citas" element={
+          <PrivateRoute roles={["ADMIN"]}><TablaCitas /></PrivateRoute>
+        } />
+        <Route path="/admin/consultorios" element={
+          <PrivateRoute roles={["ADMIN"]}><TablaConsultorios /></PrivateRoute>
+        } />
+        <Route path="/admin/doctores" element={
+          <PrivateRoute roles={["ADMIN"]}><TablaDoctores /></PrivateRoute>
+        } />
+        <Route path="/admin/historiales" element={
+          <PrivateRoute roles={["ADMIN"]}><TablaHistoriales /></PrivateRoute>
+        } />
 
-        {/* Rutas para JEFE */}
-        <Route path="/jefe" element={<JefeHome />} />
-        <Route path="/jefe/usuarios" element={<JefeUsuarios />} />
-        <Route path="/jefe/permisos" element={<JefePermisos />} />
-        <Route path="/jefe/servicios" element={<JefeServicios />} />
-        <Route path="/jefe/historiales" element={<JefeHistoriales />} />
-        <Route path="/jefe/consultorios" element={<JefeConsultorios />} />
-        <Route path="/jefe/doctores" element={<JefeDoctores />} />
+        {/* Rutas para JEFE (también puede acceder un ADMIN) */}
+        <Route path="/jefe/usuarios" element={
+          <PrivateRoute roles={["JEFE", "ADMIN"]}><TablaUsuarios /></PrivateRoute>
+        } />
+        <Route path="/jefe/permisos" element={
+          <PrivateRoute roles={["JEFE", "ADMIN"]}><TablaPermisos /></PrivateRoute>
+        } />
+        <Route path="/jefe/servicios" element={
+          <PrivateRoute roles={["JEFE", "ADMIN"]}><TablaServicios /></PrivateRoute>
+        } />
+        <Route path="/jefe/historiales" element={
+          <PrivateRoute roles={["JEFE", "ADMIN"]}><TablaHistoriales /></PrivateRoute>
+        } />
+        <Route path="/jefe/consultorios" element={
+          <PrivateRoute roles={["JEFE", "ADMIN"]}><TablaConsultorios /></PrivateRoute>
+        } />
+        <Route path="/jefe/doctores" element={
+          <PrivateRoute roles={["JEFE", "ADMIN"]}><TablaDoctores /></PrivateRoute>
+        } />
 
-        {/* Rutas para RECEPCIONISTA */}
-        <Route path="/recepcionista" element={<RecepcionistaHome />} />
-        <Route path="/recepcionista/usuarios" element={<RecepcionistaUsuarios />} />
-        <Route path="/recepcionista/historiales" element={<RecepcionistaHistoriales />} />
-        <Route path="/recepcionista/consultorios" element={<RecepcionistaConsultorios />} />
+        {/* Rutas para RECEPCIONISTA (también puede acceder un JEFE o ADMIN) */}
+        <Route path="/recepcionista/usuarios" element={
+          <PrivateRoute roles={["RECEPCIONISTA", "JEFE", "ADMIN"]}><TablaUsuarios /></PrivateRoute>
+        } />
+        <Route path="/recepcionista/historiales" element={
+          <PrivateRoute roles={["RECEPCIONISTA", "JEFE", "ADMIN"]}><TablaHistoriales /></PrivateRoute>
+        } />
+        <Route path="/recepcionista/consultorios" element={
+          <PrivateRoute roles={["RECEPCIONISTA", "JEFE", "ADMIN"]}><TablaConsultorios /></PrivateRoute>
+        } />
 
-        </Routes>
-      </Router>
+        {/* Ruta de registro */}
+        <Route path="/register" element={<Register />} />
+
+        {/* Ruta de login y unauthorized */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/unauthorized" element={<div>No tienes permisos para acceder a esta página.</div>} />
+      </Routes>
+    </Router>
   );
 };
 

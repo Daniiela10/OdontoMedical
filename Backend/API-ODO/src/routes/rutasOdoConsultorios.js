@@ -6,6 +6,7 @@ import {
     llamarConsultorio, 
     llamarConsultorioId 
 } from "../controller/controlOdoConsultorios.js";
+import { verifyJWT, verifyRole } from "../config/middlewareOdoAutenticacion.js";
 
 const modelOdoConsultorio = express.Router();
 
@@ -101,10 +102,7 @@ const modelOdoConsultorio = express.Router();
  *             example:
  *               message: "Acceso denegado. Rol no permitido."
  */
-modelOdoConsultorio.post(
-    "/consultorios", 
-    crearconsultorio
-);
+modelOdoConsultorio.post("/consultorios", verifyJWT, verifyRole(['ADMIN', 'JEFE']), crearconsultorio);
 
 /**
  * @swagger
@@ -125,10 +123,7 @@ modelOdoConsultorio.post(
  *               items:
  *                 $ref: '#/components/schemas/Consultorio'
  */
-modelOdoConsultorio.get(
-    "/consultorios", 
-    llamarConsultorio
-);
+modelOdoConsultorio.get("/consultorios", verifyJWT, verifyRole(['ADMIN', 'JEFE', 'RECEPCIONISTA']), llamarConsultorio);
 
 /**
  * @swagger
@@ -156,10 +151,7 @@ modelOdoConsultorio.get(
  *       404:
  *         description: Consultorio no encontrado
  */
-modelOdoConsultorio.get(
-    "/consultorios/:_id", 
-    llamarConsultorioId
-);
+modelOdoConsultorio.get("/consultorios/:_id", verifyJWT, verifyRole(['ADMIN', 'JEFE', 'RECEPCIONISTA', 'PACIENTE']), llamarConsultorioId);
 
 /**
  * @swagger
@@ -191,10 +183,7 @@ modelOdoConsultorio.get(
  *       404:
  *         description: Consultorio no encontrado
  */
-modelOdoConsultorio.patch(
-    "/consultorios/:_id", 
-    ActualizarConsultorio
-);
+modelOdoConsultorio.patch("/consultorios/:_id", verifyJWT, verifyRole(['ADMIN', 'JEFE']), ActualizarConsultorio);
 
 /**
  * @swagger
@@ -218,9 +207,6 @@ modelOdoConsultorio.patch(
  *       404:
  *         description: Consultorio no encontrado
  */
-modelOdoConsultorio.delete(
-    "/consultorios/:_id", 
-    borrarConsultorio
-);
+modelOdoConsultorio.delete("/consultorios/:_id", verifyJWT, verifyRole(['ADMIN']), borrarConsultorio);
 
 export default modelOdoConsultorio;

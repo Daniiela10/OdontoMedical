@@ -6,6 +6,7 @@ import {
     llamarUsuarios, 
     llamarUsuId 
 } from "../controller/controlOdoUser.js";
+import { allowPublic, verifyJWT, verifyRole } from "../config/middlewareOdoAutenticacion.js";
 
 const modelOdoUsers = express.Router();
 
@@ -94,7 +95,8 @@ const modelOdoUsers = express.Router();
  *       400:
  *         description: Error en la información del usuario
  */
-modelOdoUsers.post("/users", crearusuario);
+// Cambiado: ahora es pública para registro
+modelOdoUsers.post("/users", allowPublic, crearusuario);
 
 /**
  * @swagger
@@ -113,7 +115,7 @@ modelOdoUsers.post("/users", crearusuario);
  *               items:
  *                 $ref: '#/components/schemas/User'
  */
-modelOdoUsers.get("/users", llamarUsuarios);
+modelOdoUsers.get("/users", verifyJWT, verifyRole(['ADMIN', 'JEFE', 'RECEPCIONISTA']), llamarUsuarios);
 
 /**
  * @swagger
@@ -139,7 +141,7 @@ modelOdoUsers.get("/users", llamarUsuarios);
  *       404:
  *         description: Usuario no encontrado
  */
-modelOdoUsers.get("/users/:_id", llamarUsuId);
+modelOdoUsers.get("/users/:_id", verifyJWT, verifyRole(['ADMIN', 'JEFE', 'RECEPCIONISTA']), llamarUsuId);
 
 /**
  * @swagger
@@ -169,7 +171,7 @@ modelOdoUsers.get("/users/:_id", llamarUsuId);
  *       404:
  *         description: Usuario no encontrado
  */
-modelOdoUsers.patch("/users/:_id",  ActualizarUsu);
+modelOdoUsers.patch("/users/:_id", verifyJWT, verifyRole(['ADMIN', 'JEFE']), ActualizarUsu);
 
 /**
  * @swagger
@@ -191,6 +193,6 @@ modelOdoUsers.patch("/users/:_id",  ActualizarUsu);
  *       404:
  *         description: Usuario no encontrado
  */
-modelOdoUsers.delete("/users/:_id", borrarUsu);
+modelOdoUsers.delete("/users/:_id", verifyJWT, verifyRole(['ADMIN', 'JEFE']), borrarUsu);
 
 export default modelOdoUsers;

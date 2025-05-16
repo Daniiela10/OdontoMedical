@@ -6,7 +6,7 @@ import {
   updateCita,
   deleteCita,
 } from "../controller/controlOdoCitas.js";
-// import { verifyJWT, verifyRole } from "../config/middlewareOdoAutenticacion.js";
+import { verifyJWT, verifyRole } from "../config/middlewareOdoAutenticacion.js";
 
 const router = express.Router();
 
@@ -91,7 +91,7 @@ const router = express.Router();
  *       400:
  *         description: Error en la solicitud
  */
-router.post("/citas", createCita);
+router.post("/citas", verifyJWT, verifyRole(['ADMIN', 'JEFE', 'RECEPCIONISTA', 'PACIENTE']), createCita);
 
 /**
  * @swagger
@@ -106,7 +106,7 @@ router.post("/citas", createCita);
  *       500:
  *         description: Error del servidor
  */
-router.get("/citas", getCitas);
+router.get("/citas", verifyJWT, verifyRole(['ADMIN', 'JEFE', 'RECEPCIONISTA']), getCitas);
 
 /**
  * @swagger
@@ -128,7 +128,7 @@ router.get("/citas", getCitas);
  *       404:
  *         description: Cita no encontrada
  */
-router.get("/citas/:_id", getCitaById);
+router.get("/citas/:_id", verifyJWT, verifyRole(['ADMIN', 'JEFE', 'RECEPCIONISTA', 'PACIENTE']), getCitaById);
 
 /**
  * @swagger
@@ -158,7 +158,7 @@ router.get("/citas/:_id", getCitaById);
  *       404:
  *         description: Cita no encontrada
  */
-router.patch("/citas/:_id", updateCita);
+router.patch("/citas/:_id", verifyJWT, verifyRole(['ADMIN', 'JEFE', 'RECEPCIONISTA']), updateCita);
 
 /**
  * @swagger
@@ -180,6 +180,6 @@ router.patch("/citas/:_id", updateCita);
  *       404:
  *         description: Cita no encontrada
  */
-router.delete("/citas/:_id", deleteCita);
+router.delete("/citas/:_id", verifyJWT, verifyRole(['ADMIN', 'JEFE']), deleteCita);
 
 export default router;
