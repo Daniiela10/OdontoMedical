@@ -10,11 +10,31 @@ import TablaCitas from './components/TablaCitas';
 import TablaHistoriales from './components/TablaHistoriales';
 import Login from './components/Login';
 import Register from './components/Register';
+import HomePage from './pages/HomePage';
+
+// Páginas públicas
+import Contactenos from './pages/Contactenos';
+import Nosotros from './pages/Nosotros';
+
+// Páginas de paciente
+import Perfil from './pages/Perfil';
+// import VerMiHistoria from './pages/VerMiHistoria';
+// import AgendarCitas from './pages/AgendarCitas';
 
 const App = () => {
   return (
     <Router>
       <Routes>
+        {/* Páginas públicas */}
+        <Route path="/" element={<HomePage />} />
+        <Route path="/contactenos" element={<Contactenos />} /> 
+        <Route path="/nosotros" element={<Nosotros />} /> 
+
+        {/* Páginas para PACIENTE */}
+        {/* <Route path="/ver-mi-historia" element={<VerMiHistoria />} />
+        <Route path="/agendar-citas" element={<AgendarCitas />} /> */}
+        <Route path="/perfil" element={<Perfil />} />
+
         {/* Rutas para ADMIN */}
         <Route path="/admin/usuarios" element={
           <PrivateRoute roles={["ADMIN"]}><TablaUsuarios /></PrivateRoute>

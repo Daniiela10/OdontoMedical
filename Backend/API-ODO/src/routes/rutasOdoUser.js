@@ -141,7 +141,7 @@ modelOdoUsers.get("/users", verifyJWT, verifyRole(['ADMIN', 'JEFE', 'RECEPCIONIS
  *       404:
  *         description: Usuario no encontrado
  */
-modelOdoUsers.get("/users/:_id", verifyJWT, verifyRole(['ADMIN', 'JEFE', 'RECEPCIONISTA']), llamarUsuId);
+modelOdoUsers.get("/users/:_id",verifyJWT,verifyRole(['ADMIN', 'JEFE', 'RECEPCIONISTA', 'PACIENTE']), llamarUsuId);
 
 /**
  * @swagger
@@ -171,7 +171,7 @@ modelOdoUsers.get("/users/:_id", verifyJWT, verifyRole(['ADMIN', 'JEFE', 'RECEPC
  *       404:
  *         description: Usuario no encontrado
  */
-modelOdoUsers.patch("/users/:_id", verifyJWT, verifyRole(['ADMIN', 'JEFE']), ActualizarUsu);
+modelOdoUsers.patch("/users/:_id",verifyJWT,verifyRole(['ADMIN', 'JEFE', 'PACIENTE']), ActualizarUsu);
 
 /**
  * @swagger

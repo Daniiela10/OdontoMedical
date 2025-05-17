@@ -1,7 +1,16 @@
 import React, { useState } from 'react';
 import api from '../API/axiosInstance';
-import { useNavigate, Link } from 'react-router-dom';
-import { Form, Button, Alert, Container, Card } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
+import { Form, Button, Alert } from 'react-bootstrap';
+
+const palette = {
+  primary: '#556f70',
+  secondary: '#49b6b2',
+  light: '#eef6f6',
+  accent: '#95bfbd',
+  gray: '#7d7e7d',
+  grayLight: '#8c9694',
+};
 
 const Register = () => {
   const navigate = useNavigate();
@@ -58,103 +67,177 @@ const Register = () => {
   };
 
   return (
-    <Container className="d-flex justify-content-center align-items-center" style={{ minHeight: '100vh' }}>
-      <Card style={{ width: '100%', maxWidth: 400 }}>
-        <Card.Body>
-          <h2 className="mb-4 text-center">Registro de Paciente</h2>
-          {error && (
-            <Alert variant="danger" onClose={() => setError(null)} dismissible>
-              {error}
-            </Alert>
-          )}
-          <Form onSubmit={handleSubmit}>
-            <Form.Group className="mb-3">
-              <Form.Label>Nombre</Form.Label>
-              <Form.Control
-                type="text"
-                name="Nombre"
-                value={formData.Nombre}
-                onChange={handleInputChange}
-                isInvalid={!!formErrors.Nombre}
-              />
-              <Form.Control.Feedback type="invalid">{formErrors.Nombre}</Form.Control.Feedback>
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Apellido</Form.Label>
-              <Form.Control
-                type="text"
-                name="Apellido"
-                value={formData.Apellido}
-                onChange={handleInputChange}
-                isInvalid={!!formErrors.Apellido}
-              />
-              <Form.Control.Feedback type="invalid">{formErrors.Apellido}</Form.Control.Feedback>
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Tipo de Documento</Form.Label>
-              <Form.Control
-                type="text"
-                name="Tipo_Doc"
-                value={formData.Tipo_Doc}
-                onChange={handleInputChange}
-                isInvalid={!!formErrors.Tipo_Doc}
-              />
-              <Form.Control.Feedback type="invalid">{formErrors.Tipo_Doc}</Form.Control.Feedback>
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Documento</Form.Label>
-              <Form.Control
-                type="text"
-                name="Doc_identificacion"
-                value={formData.Doc_identificacion}
-                onChange={handleInputChange}
-                isInvalid={!!formErrors.Doc_identificacion}
-              />
-              <Form.Control.Feedback type="invalid">{formErrors.Doc_identificacion}</Form.Control.Feedback>
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Teléfono</Form.Label>
-              <Form.Control
-                type="text"
-                name="Telefono"
-                value={formData.Telefono}
-                onChange={handleInputChange}
-                isInvalid={!!formErrors.Telefono}
-              />
-              <Form.Control.Feedback type="invalid">{formErrors.Telefono}</Form.Control.Feedback>
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Correo</Form.Label>
-              <Form.Control
-                type="email"
-                name="Correo"
-                value={formData.Correo}
-                onChange={handleInputChange}
-                isInvalid={!!formErrors.Correo}
-              />
-              <Form.Control.Feedback type="invalid">{formErrors.Correo}</Form.Control.Feedback>
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Clave</Form.Label>
-              <Form.Control
-                type="password"
-                name="Clave"
-                value={formData.Clave}
-                onChange={handleInputChange}
-                isInvalid={!!formErrors.Clave}
-              />
-              <Form.Control.Feedback type="invalid">{formErrors.Clave}</Form.Control.Feedback>
-            </Form.Group>
-            <Button variant="primary" type="submit" className="w-100">
-              Registrarse
-            </Button>
-          </Form>
-          <div className="mt-3 text-center">
-            ¿Ya tienes cuenta? <Link to="/login">Inicia sesión</Link>
-          </div>
-        </Card.Body>
-      </Card>
-    </Container>
+    <div
+      style={{
+        background: palette.light,
+        borderRadius: 18,
+        boxShadow: '0 4px 24px rgba(85,111,112,0.10)',
+        padding: '2.5rem 2rem',
+        maxWidth: 420,
+        margin: '0 auto',
+      }}
+    >
+      <h2
+        className="mb-4 text-center"
+        style={{
+          color: palette.primary,
+          fontWeight: 700,
+          letterSpacing: 1,
+        }}
+      >
+        Registro de Paciente
+      </h2>
+      {error && (
+        <Alert variant="danger" onClose={() => setError(null)} dismissible>
+          {error}
+        </Alert>
+      )}
+      <Form onSubmit={handleSubmit}>
+        <Form.Group className="mb-3">
+          <Form.Label style={{ color: palette.gray, fontWeight: 500 }}>Nombre</Form.Label>
+          <Form.Control
+            type="text"
+            name="Nombre"
+            value={formData.Nombre}
+            onChange={handleInputChange}
+            isInvalid={!!formErrors.Nombre}
+            style={{
+              borderRadius: 12,
+              border: `1.5px solid ${palette.accent}`,
+              background: palette.light,
+              color: palette.primary,
+              fontWeight: 500,
+            }}
+          />
+          <Form.Control.Feedback type="invalid">{formErrors.Nombre}</Form.Control.Feedback>
+        </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label style={{ color: palette.gray, fontWeight: 500 }}>Apellido</Form.Label>
+          <Form.Control
+            type="text"
+            name="Apellido"
+            value={formData.Apellido}
+            onChange={handleInputChange}
+            isInvalid={!!formErrors.Apellido}
+            style={{
+              borderRadius: 12,
+              border: `1.5px solid ${palette.accent}`,
+              background: palette.light,
+              color: palette.primary,
+              fontWeight: 500,
+            }}
+          />
+          <Form.Control.Feedback type="invalid">{formErrors.Apellido}</Form.Control.Feedback>
+        </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label style={{ color: palette.gray, fontWeight: 500 }}>Tipo de Documento</Form.Label>
+          <Form.Control
+            type="text"
+            name="Tipo_Doc"
+            value={formData.Tipo_Doc}
+            onChange={handleInputChange}
+            isInvalid={!!formErrors.Tipo_Doc}
+            style={{
+              borderRadius: 12,
+              border: `1.5px solid ${palette.accent}`,
+              background: palette.light,
+              color: palette.primary,
+              fontWeight: 500,
+            }}
+          />
+          <Form.Control.Feedback type="invalid">{formErrors.Tipo_Doc}</Form.Control.Feedback>
+        </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label style={{ color: palette.gray, fontWeight: 500 }}>Documento</Form.Label>
+          <Form.Control
+            type="text"
+            name="Doc_identificacion"
+            value={formData.Doc_identificacion}
+            onChange={handleInputChange}
+            isInvalid={!!formErrors.Doc_identificacion}
+            style={{
+              borderRadius: 12,
+              border: `1.5px solid ${palette.accent}`,
+              background: palette.light,
+              color: palette.primary,
+              fontWeight: 500,
+            }}
+          />
+          <Form.Control.Feedback type="invalid">{formErrors.Doc_identificacion}</Form.Control.Feedback>
+        </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label style={{ color: palette.gray, fontWeight: 500 }}>Teléfono</Form.Label>
+          <Form.Control
+            type="text"
+            name="Telefono"
+            value={formData.Telefono}
+            onChange={handleInputChange}
+            isInvalid={!!formErrors.Telefono}
+            style={{
+              borderRadius: 12,
+              border: `1.5px solid ${palette.accent}`,
+              background: palette.light,
+              color: palette.primary,
+              fontWeight: 500,
+            }}
+          />
+          <Form.Control.Feedback type="invalid">{formErrors.Telefono}</Form.Control.Feedback>
+        </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label style={{ color: palette.gray, fontWeight: 500 }}>Correo</Form.Label>
+          <Form.Control
+            type="email"
+            name="Correo"
+            value={formData.Correo}
+            onChange={handleInputChange}
+            isInvalid={!!formErrors.Correo}
+            style={{
+              borderRadius: 12,
+              border: `1.5px solid ${palette.accent}`,
+              background: palette.light,
+              color: palette.primary,
+              fontWeight: 500,
+            }}
+          />
+          <Form.Control.Feedback type="invalid">{formErrors.Correo}</Form.Control.Feedback>
+        </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label style={{ color: palette.gray, fontWeight: 500 }}>Clave</Form.Label>
+          <Form.Control
+            type="password"
+            name="Clave"
+            value={formData.Clave}
+            onChange={handleInputChange}
+            isInvalid={!!formErrors.Clave}
+            style={{
+              borderRadius: 12,
+              border: `1.5px solid ${palette.accent}`,
+              background: palette.light,
+              color: palette.primary,
+              fontWeight: 500,
+            }}
+          />
+          <Form.Control.Feedback type="invalid">{formErrors.Clave}</Form.Control.Feedback>
+        </Form.Group>
+        <Button
+          variant="primary"
+          type="submit"
+          className="w-100"
+          style={{
+            background: palette.secondary,
+            border: 'none',
+            borderRadius: 20,
+            fontWeight: 600,
+            fontSize: 18,
+            padding: "0.5rem 0",
+            boxShadow: '0 2px 8px rgba(73,182,178,0.10)',
+            transition: "background 0.2s"
+          }}
+        >
+          Registrarse
+        </Button>
+      </Form>
+    </div>
   );
 };
 

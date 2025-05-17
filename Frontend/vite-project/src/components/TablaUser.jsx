@@ -188,7 +188,7 @@ const TablaUser = () => {
     localStorage.removeItem('roles');
     sessionStorage.clear();
     if (setUser) setUser(null); // Limpia el contexto si es posible
-    navigate('/login');
+    navigate('/');
   };
 
   // Configuración de vistas permitidas por rol

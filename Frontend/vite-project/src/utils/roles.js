@@ -1,5 +1,5 @@
 // Jerarquía de roles de menor a mayor privilegio
-const rolesHierarchy = ["RECEPCIONISTA", "JEFE", "ADMIN"];
+const rolesHierarchy = ["PACIENTE", "RECEPCIONISTA", "JEFE", "ADMIN"];
 
 /**
  * Verifica si el usuario tiene permiso para acceder a la ruta según la jerarquía.
