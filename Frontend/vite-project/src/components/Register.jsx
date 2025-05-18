@@ -12,6 +12,25 @@ const palette = {
   grayLight: '#8c9694',
 };
 
+const opcionesTipoDoc = [
+  { value: "RC", label: "Registro Civil de Nacimiento" },
+  { value: "TI", label: "Tarjeta de Identidad" },
+  { value: "CC", label: "Cédula de Ciudadanía" },
+  { value: "TE", label: "Tarjeta de Extranjería" },
+  { value: "CE", label: "Cédula de Extranjería" },
+  { value: "NIT", label: "NIT" },
+  { value: "PP", label: "Pasaporte" },
+  { value: "PEP", label: "Permiso Especial de Permanencia" },
+  { value: "DIE", label: "Documento de Identificación Extranjero" },
+  { value: "PA", label: "Pasaporte (compatibilidad)" },
+];
+
+const opcionesGenero = [
+  { value: "Masculino", label: "Masculino" },
+  { value: "Femenino", label: "Femenino" },
+  { value: "Otro", label: "Otro" },
+];
+
 const Register = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -23,6 +42,8 @@ const Register = () => {
     Correo: '',
     Clave: '',
     Permiso: '6820f7c214cd039b43a1f66c', // ID fijo para PACIENTE
+    Genero: '',
+    Edad: '',
   });
   const [formErrors, setFormErrors] = useState({});
   const [error, setError] = useState(null);
@@ -44,6 +65,9 @@ const Register = () => {
     if (!formData.Telefono.trim() || isNaN(formData.Telefono)) errors.Telefono = 'Teléfono es requerido y debe ser numérico';
     if (!formData.Correo.trim()) errors.Correo = 'Correo es requerido';
     if (!formData.Clave.trim()) errors.Clave = 'Clave es requerida';
+    else if (formData.Clave.length < 8) errors.Clave = 'La clave debe tener al menos 8 caracteres';
+    if (!formData.Genero.trim()) errors.Genero = 'El género es requerido';
+    if (!formData.Edad.trim() || isNaN(formData.Edad) || formData.Edad < 0 || formData.Edad > 120) errors.Edad = 'Edad válida requerida (0-120)';
     return errors;
   };
 
@@ -58,6 +82,7 @@ const Register = () => {
       const dataToSend = {
         ...formData,
         Telefono: Number(formData.Telefono),
+        Edad: Number(formData.Edad),
       };
       await api.post('/users', dataToSend);
       navigate('/login');
@@ -131,8 +156,7 @@ const Register = () => {
         </Form.Group>
         <Form.Group className="mb-3">
           <Form.Label style={{ color: palette.gray, fontWeight: 500 }}>Tipo de Documento</Form.Label>
-          <Form.Control
-            type="text"
+          <Form.Select
             name="Tipo_Doc"
             value={formData.Tipo_Doc}
             onChange={handleInputChange}
@@ -144,7 +168,12 @@ const Register = () => {
               color: palette.primary,
               fontWeight: 500,
             }}
-          />
+          >
+            <option value="">Seleccione...</option>
+            {opcionesTipoDoc.map((op) => (
+              <option key={op.value} value={op.value}>{op.label}</option>
+            ))}
+          </Form.Select>
           <Form.Control.Feedback type="invalid">{formErrors.Tipo_Doc}</Form.Control.Feedback>
         </Form.Group>
         <Form.Group className="mb-3">
@@ -202,13 +231,16 @@ const Register = () => {
           <Form.Control.Feedback type="invalid">{formErrors.Correo}</Form.Control.Feedback>
         </Form.Group>
         <Form.Group className="mb-3">
-          <Form.Label style={{ color: palette.gray, fontWeight: 500 }}>Clave</Form.Label>
+          <Form.Label style={{ color: palette.gray, fontWeight: 500 }}>
+            Clave <span style={{ fontWeight: 400, color: palette.grayLight }}>(mínimo 8 caracteres)</span>
+          </Form.Label>
           <Form.Control
             type="password"
             name="Clave"
             value={formData.Clave}
             onChange={handleInputChange}
             isInvalid={!!formErrors.Clave}
+            minLength={8}
             style={{
               borderRadius: 12,
               border: `1.5px solid ${palette.accent}`,
@@ -218,6 +250,48 @@ const Register = () => {
             }}
           />
           <Form.Control.Feedback type="invalid">{formErrors.Clave}</Form.Control.Feedback>
+        </Form.Group>
+        <Form.Group className="mb-3">
+          <Form.Label style={{ color: palette.gray, fontWeight: 500 }}>Género</Form.Label>
+          <Form.Select
+            name="Genero"
+            value={formData.Genero}
+            onChange={handleInputChange}
+            isInvalid={!!formErrors.Genero}
+            style={{
+              borderRadius: 12,
+              border: `1.5px solid ${palette.accent}`,
+              background: palette.light,
+              color: palette.primary,
+              fontWeight: 500,
+            }}
+          >
+            <option value="">Seleccione...</option>
+            {opcionesGenero.map((op) => (
+              <option key={op.value} value={op.value}>{op.label}</option>
+            ))}
+          </Form.Select>
+          <Form.Control.Feedback type="invalid">{formErrors.Genero}</Form.Control.Feedback>
+        </Form.Group>
+        <Form.Group className="mb-4">
+          <Form.Label style={{ color: palette.gray, fontWeight: 500 }}>Edad</Form.Label>
+          <Form.Control
+            type="number"
+            name="Edad"
+            value={formData.Edad}
+            onChange={handleInputChange}
+            isInvalid={!!formErrors.Edad}
+            min={0}
+            max={120}
+            style={{
+              borderRadius: 12,
+              border: `1.5px solid ${palette.accent}`,
+              background: palette.light,
+              color: palette.primary,
+              fontWeight: 500,
+            }}
+          />
+          <Form.Control.Feedback type="invalid">{formErrors.Edad}</Form.Control.Feedback>
         </Form.Group>
         <Button
           variant="primary"

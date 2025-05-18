@@ -93,7 +93,7 @@ const router = express.Router();
  *             example:
  *               message: "Datos obligatorios faltantes."
  */
-router.post("/doctora", verifyJWT, verifyRole(['ADMIN', 'JEFE']), CreateDoctora);
+router.post("/doctora", verifyJWT, verifyRole(['ADMIN', 'DOCTORA']), CreateDoctora);
 
 /**
  * @swagger
@@ -113,7 +113,7 @@ router.post("/doctora", verifyJWT, verifyRole(['ADMIN', 'JEFE']), CreateDoctora)
  *               items:
  *                 $ref: '#/components/schemas/Doctora'
  */
-router.get("/doctora", verifyJWT, verifyRole(['ADMIN', 'JEFE', 'RECEPCIONISTA']), BuscarDoctora);
+router.get("/doctora", verifyJWT, verifyRole(['ADMIN', 'DOCTORA', 'RECEPCIONISTA', 'PACIENTE']), BuscarDoctora);
 
 /**
  * @swagger
@@ -140,7 +140,7 @@ router.get("/doctora", verifyJWT, verifyRole(['ADMIN', 'JEFE', 'RECEPCIONISTA'])
  *       404:
  *         description: No se encontró la doctora con ese ID
  */
-router.get("/doctora/:_id", verifyJWT, verifyRole(['ADMIN', 'JEFE', 'RECEPCIONISTA', 'PACIENTE']), BuscarDoctoraID);
+router.get("/doctora/:_id", verifyJWT, verifyRole(['ADMIN', 'DOCTORA', 'RECEPCIONISTA', 'PACIENTE']), BuscarDoctoraID);
 
 /**
  * @swagger
@@ -184,7 +184,7 @@ router.get("/doctora/:_id", verifyJWT, verifyRole(['ADMIN', 'JEFE', 'RECEPCIONIS
  *       400:
  *         description: Error en los datos enviados para la actualización
  */
-router.patch("/doctora/:_id", verifyJWT, verifyRole(['ADMIN', 'JEFE']), UpdateDoctora);
+router.patch("/doctora/:_id", verifyJWT, verifyRole(['ADMIN', 'DOCTORA']), UpdateDoctora);
 
 /**
  * @swagger

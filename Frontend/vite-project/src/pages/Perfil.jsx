@@ -2,13 +2,26 @@ import { useState, useEffect, useContext } from "react";
 import { Container, Form, Button, Row, Col, Alert, Spinner } from "react-bootstrap";
 import { AuthContext } from "../contexts/AuthContext";
 import api from "../API/axiosInstance";
-import NavBar from "../components/NavBar";
+import NavBar from "../components/NavBar/NavBar";
 import Footer from "../components/Footer";
 
 const opcionesTipoDoc = [
-  { value: "C.C", label: "Cédula de Ciudadanía" },
-  { value: "T.I", label: "Tarjeta de Identidad" },
-  { value: "PA", label: "Pasaporte" },
+  { value: "RC", label: "Registro Civil de Nacimiento" },
+  { value: "TI", label: "Tarjeta de Identidad" },
+  { value: "CC", label: "Cédula de Ciudadanía" },
+  { value: "TE", label: "Tarjeta de Extranjería" },
+  { value: "CE", label: "Cédula de Extranjería" },
+  { value: "NIT", label: "NIT" },
+  { value: "PP", label: "Pasaporte" },
+  { value: "PEP", label: "Permiso Especial de Permanencia" },
+  { value: "DIE", label: "Documento de Identificación Extranjero" },
+  { value: "PA", label: "Pasaporte (compatibilidad)" },
+];
+
+const opcionesGenero = [
+  { value: "Masculino", label: "Masculino" },
+  { value: "Femenino", label: "Femenino" },
+  { value: "Otro", label: "Otro" },
 ];
 
 const Perfil = () => {
@@ -20,6 +33,8 @@ const Perfil = () => {
     Doc_identificacion: "",
     Telefono: "",
     Correo: "",
+    Genero: "",
+    Edad: "",
   });
   const [loading, setLoading] = useState(true);
   const [mensaje, setMensaje] = useState("");
@@ -50,6 +65,8 @@ const Perfil = () => {
           Doc_identificacion: res.data.Doc_identificacion || "",
           Telefono: res.data.Telefono || "",
           Correo: res.data.Correo || "",
+          Genero: res.data.Genero || "",
+          Edad: res.data.Edad || "",
         });
       } catch (err) {
         setError("No se pudieron cargar los datos.");
@@ -78,6 +95,7 @@ const Perfil = () => {
         Tipo_Doc: formData.Tipo_Doc,
         Doc_identificacion: formData.Doc_identificacion,
         Permiso: "6820f7c214cd039b43a1f66c",
+        Edad: formData.Edad,
       });
       setMensaje("Datos actualizados correctamente.");
     } catch (err) {
@@ -223,7 +241,7 @@ const Perfil = () => {
                 }}
               />
             </Form.Group>
-            <Form.Group className="mb-4">
+            <Form.Group className="mb-3">
               <Form.Label style={{ color: "#556f70", fontWeight: 600 }}>Correo electrónico</Form.Label>
               <Form.Control
                 type="email"
@@ -239,6 +257,50 @@ const Perfil = () => {
                 }}
               />
             </Form.Group>
+            <Row>
+              <Col>
+                <Form.Group className="mb-3">
+                  <Form.Label style={{ color: "#556f70", fontWeight: 600 }}>Edad</Form.Label>
+                  <Form.Control
+                    type="number"
+                    name="Edad"
+                    value={formData.Edad}
+                    onChange={handleChange}
+                    min={0}
+                    max={120}
+                    required
+                    style={{
+                      background: "#eef6f6",
+                      border: "1.5px solid #95bfbd",
+                      borderRadius: 10,
+                      color: "#556f70"
+                    }}
+                  />
+                </Form.Group>
+              </Col>
+              <Col>
+                <Form.Group className="mb-3">
+                  <Form.Label style={{ color: "#556f70", fontWeight: 600 }}>Género</Form.Label>
+                  <Form.Select
+                    name="Genero"
+                    value={formData.Genero}
+                    disabled
+                    readOnly
+                    style={{
+                      background: "#8c9694",
+                      border: "1.5px solid #95bfbd",
+                      borderRadius: 10,
+                      color: "#7d7e7d"
+                    }}
+                  >
+                    <option value="">Seleccione...</option>
+                    {opcionesGenero.map((op) => (
+                      <option key={op.value} value={op.value}>{op.label}</option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+            </Row>
             <Button
               type="submit"
               style={{

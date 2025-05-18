@@ -1,7 +1,73 @@
 import CitaSchema from "../models/modelOdoCitas.js";
+import Doctora from "../models/modelOdoDoctora.js";
+import Servicios from "../models/modelOdoServicios.js";
+
 
 export const createCita = async (req, resp) => {
   try {
+    const { servicios, doctora, fecha, hora } = req.body;
+    // Verificar duplicidad de cita para el mismo servicio, fecha y hora y doctora
+    const existe = await CitaSchema.findOne({ servicios, fecha, hora, doctora });
+    if (existe) {
+      return resp.status(409).json({ message: "Ya existe una cita para ese servicio, fecha, hora y doctora." });
+    }
+    // Obtener info de doctora y servicio
+    const doc = await Doctora.findById(doctora);
+    const serv = await Servicios.findById(servicios);
+    if (!doc || !serv) {
+      return resp.status(400).json({ message: "Doctora o servicio no válido." });
+    }
+    const cargo = doc.Cargo?.toLowerCase();
+    const nombreServicio = serv.Nombre?.toLowerCase();
+    const fechaMoment = moment(fecha);
+    const day = fechaMoment.day(); // 0=domingo, 6=sábado
+    const [horaStr, minStr] = hora.split(":");
+    const horaNum = parseInt(horaStr, 10);
+    // ORTODONCIA
+    if (nombreServicio.includes("ortodoncia")) {
+      if (!cargo.includes("ortodoncista")) {
+        return resp.status(400).json({ message: "Solo la ortodoncista puede atender ortodoncia." });
+      }
+      if (day !== 4) {
+        return resp.status(400).json({ message: "Las citas de ortodoncia solo se atienden los jueves." });
+      }
+      const minutosValidos = ["00", "20", "40"];
+      if (horaNum < 13 || horaNum > 19 || (horaNum === 19 && minStr !== "00")) {
+        return resp.status(400).json({ message: "Horario de ortodoncia: jueves de 13:00 a 19:00." });
+      }
+      if (!minutosValidos.includes(minStr)) {
+        return resp.status(400).json({ message: "Intervalos de ortodoncia: cada 20 minutos (00, 20, 40)." });
+      }
+    } else {
+      // ODONTÓLOGA GENERAL
+      if (!cargo.includes("odontóloga") && !cargo.includes("odontologa")) {
+        return resp.status(400).json({ message: "Solo la odontóloga general puede atender este servicio." });
+      }
+      if (day === 0) {
+        return resp.status(400).json({ message: "No se atienden citas los domingos." });
+      }
+      // Lunes a viernes
+      if (day >= 1 && day <= 5) {
+        if (horaNum < 12 || horaNum > 17 || (horaNum === 17 && minStr !== "00")) {
+          return resp.status(400).json({ message: "Horario de odontología general: lun-vie 12:00 a 17:00." });
+        }
+        // Intervalos de 40 min o 1h
+        const minutosValidos = ["00", "40"];
+        if (!minutosValidos.includes(minStr)) {
+          return resp.status(400).json({ message: "Intervalos válidos: cada 40 minutos o 1 hora (00, 40)." });
+        }
+      }
+      // Sábado
+      if (day === 6) {
+        if (horaNum < 12 || horaNum > 15 || (horaNum === 15 && minStr !== "00")) {
+          return resp.status(400).json({ message: "Horario de odontología general: sábados 12:00 a 15:00." });
+        }
+        // Preferible 1h para cirugías (solo 00 permitido)
+        if (minStr !== "00") {
+          return resp.status(400).json({ message: "Los sábados solo se permiten intervalos de 1 hora (00)." });
+        }
+      }
+    }
     const cita = new CitaSchema(req.body);
     const data = await cita.save();
     resp.status(201).json({ message: "Cita creada exitosamente", data });
@@ -75,5 +141,30 @@ export const deleteCita = async (req, resp) => {
     }
   } catch (error) {
     resp.status(500).json({ message: "Error al eliminar la cita", error: error.message });
+  }
+};
+
+export const confirmarAsistencia = async (req, resp) => {
+  const { _id } = req.params;
+  try {
+    const cita = await CitaSchema.findById(_id);
+    if (!cita) {
+      return resp.status(404).json({ message: 'Cita no encontrada' });
+    }
+    cita.estado = 'Terminado';
+    await cita.save();
+    resp.status(200).json({ message: 'Cita confirmada y marcada como terminada', data: cita });
+  } catch (error) {
+    resp.status(500).json({ message: 'Error al confirmar la asistencia', error: error.message });
+  }
+};
+
+export const eliminarCitasTerminadasAntiguas = async () => {
+  const tresHorasAntes = new Date(Date.now() - 3 * 60 * 60 * 1000);
+  try {
+    const result = await CitaSchema.deleteMany({ estado: 'Terminado', fecha: { $lte: tresHorasAntes } });
+    console.log(`Citas terminadas eliminadas: ${result.deletedCount}`);
+  } catch (error) {
+    console.error('Error al eliminar citas terminadas:', error.message);
   }
 };

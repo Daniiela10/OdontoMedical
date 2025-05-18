@@ -38,7 +38,7 @@ const Login = () => {
       login(token);
 
       if (rol === "ADMIN") navigate("/admin/usuarios");
-      else if (rol === "JEFE") navigate("/jefe/usuarios");
+      else if (rol === "DOCTORA") navigate("/doctora/usuarios");
       else if (rol === "RECEPCIONISTA") navigate("/recepcionista/usuarios");
       else if (rol === "PACIENTE") navigate("/perfil");
       else navigate("/unauthorized");

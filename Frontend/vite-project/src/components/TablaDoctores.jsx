@@ -6,6 +6,9 @@ import { FaUserCog, FaKey, FaEdit, FaTrash, FaCogs, FaCalendarAlt, FaFileMedical
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { AuthContext } from '../contexts/AuthContext'; // Asegúrate de que la ruta sea correcta
 import { tienePermiso } from '../utils/roles'; // <-- Importa la función de permisos
+import NavBarCrud from './NavBar/NavBarCrud';
+import { ModalEditarDoctor, ModalEliminarDoctor } from './Modales/ModalDoctor';
+import '../styles/globalTableStyles.css';
 
 const API_URL = '/doctora'; // Solo la ruta, la instancia ya tiene el baseURL
 const API_CONSULTORIOS_URL = '/consultorios';
@@ -18,7 +21,7 @@ const TablaDoctores = () => {
     // Determina el rol mínimo requerido según la ruta
     let rutaRol = "";
     if (location.pathname.startsWith('/admin')) rutaRol = "ADMIN";
-    else if (location.pathname.startsWith('/jefe')) rutaRol = "JEFE";
+    else if (location.pathname.startsWith('/doctora')) rutaRol = "DOCTORA";
     else if (location.pathname.startsWith('/recepcionista')) rutaRol = "RECEPCIONISTA";
 
     // Obtiene el rol real del usuario
@@ -50,7 +53,7 @@ const TablaDoctores = () => {
         Id_consultorio: '',
     });
     const [currentPage, setCurrentPage] = useState(1);
-    const doctoresPerPage = 10;
+    const itemsPerPage = 10;
     const [showEditModal, setShowEditModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [doctorToDelete, setDoctorToDelete] = useState(null);
@@ -144,10 +147,10 @@ const TablaDoctores = () => {
         doctor.Nombres?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const indexOfLastDoctor = currentPage * doctoresPerPage;
-    const indexOfFirstDoctor = indexOfLastDoctor - doctoresPerPage;
-    const currentDoctores = filteredDoctores.slice(indexOfFirstDoctor, indexOfLastDoctor);
-
+    const indexOfLast = currentPage * itemsPerPage;
+    const indexOfFirst = indexOfLast - itemsPerPage;
+    const currentItems = filteredDoctores.slice(indexOfFirst, indexOfLast);
+    const totalPages = Math.ceil(filteredDoctores.length / itemsPerPage);
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
     // Configuración de vistas permitidas por rol
@@ -161,7 +164,7 @@ const TablaDoctores = () => {
             { key: 'consultorios', label: 'Consultorios', icon: <FaClinicMedical className="me-2" /> },
             { key: 'doctores', label: 'Doctores', icon: <FaUserMd className="me-2" /> },
         ],
-        JEFE: [
+        DOCTORA: [
             { key: 'usuarios', label: 'Usuarios', icon: <FaUserCog className="me-2" /> },
             { key: 'permisos', label: 'Permisos', icon: <FaKey className="me-2" /> },
             { key: 'servicios', label: 'Servicios', icon: <FaCogs className="me-2" /> },
@@ -179,7 +182,7 @@ const TablaDoctores = () => {
     // Función para obtener el prefijo de ruta según el rol
     const getBasePath = (rol) => {
         if (rol === "ADMIN") return "/admin";
-        if (rol === "JEFE") return "/jefe";
+        if (rol === "DOCTORA") return "/doctora";
         if (rol === "RECEPCIONISTA") return "/recepcionista";
         return "/";
     };
@@ -197,48 +200,8 @@ const TablaDoctores = () => {
 
     return (
         <div className="d-flex" style={{ minHeight: '100vh', backgroundColor: colorScheme.light }}>
-            {/* Sidebar */}
-            <div
-                className="d-flex flex-column"
-                style={{
-                    width: '250px',
-                    height: '100vh',
-                    backgroundColor: colorScheme.primary,
-                    color: colorScheme.light,
-                }}
-            >
-                <div className="p-3 border-bottom" style={{ borderColor: colorScheme.secondary }}>
-                    <Link
-                        to="/admin"
-                        className="text-light text-decoration-none d-flex align-items-center"
-                    >
-                        <FaUserCog className="me-2" size={24} />
-                        <h5 className="mb-0">Panel de Control</h5>
-                    </Link>
-                </div>
-
-                <Nav variant="pills" className="flex-column p-3">
-                    {menuItems.map((item) => (
-                        <Nav.Item key={item.path} className="mb-2">
-                            <Nav.Link
-                                as={Link}
-                                to={item.path}
-                                className="text-white d-flex align-items-center"
-                                style={{
-                                    backgroundColor: 'transparent',
-                                    borderRadius: '4px',
-                                    border: 'none',
-                                }}
-                                onClick={() => isMobile && setSidebarOpen(false)}
-                            >
-                                {item.icon}
-                                {item.label}
-                            </Nav.Link>
-                        </Nav.Item>
-                    ))}
-                </Nav>
-            </div>
-
+            {/* Sidebar NavBarCrud */}
+            <NavBarCrud colorScheme={colorScheme} userRol={userRol} />
             {/* Main Content */}
             <div className="flex-grow-1 p-4">
                 <h1 className="text-center mb-4">Gestión de Doctores</h1>
@@ -269,7 +232,7 @@ const TablaDoctores = () => {
                     )}
                 </div>
                 <div className="table-responsive shadow-sm rounded">
-                    <Table striped hover className="mb-0">
+                    <Table responsive striped hover className="mb-0">
                         <thead style={{ backgroundColor: colorScheme.primary, color: colorScheme.light }}>
                             <tr>
                                 <th>Nombres</th>
@@ -280,7 +243,7 @@ const TablaDoctores = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {currentDoctores.map((doctor) => (
+                            {currentItems.map((doctor) => (
                                 <tr key={doctor._id}>
                                     <td>{doctor.Nombres}</td>
                                     <td>{doctor.Apellidos}</td>
@@ -314,94 +277,33 @@ const TablaDoctores = () => {
                 </div>
                 <nav>
                     <ul className="pagination">
-                        {Array.from({ length: Math.ceil(filteredDoctores.length / doctoresPerPage) }, (_, index) => (
-                            <li key={index} className={`page-item ${currentPage === index + 1 ? 'active' : ''}`}>
-                                <button className="page-link" onClick={() => paginate(index + 1)}>
-                                    {index + 1}
-                                </button>
+                        {Array.from({ length: totalPages }, (_, i) => (
+                            <li key={i} className={`page-item ${currentPage === i + 1 ? 'active' : ''}`}>
+                                <button className="page-link" onClick={() => paginate(i + 1)}>{i + 1}</button>
                             </li>
                         ))}
                     </ul>
                 </nav>
+
+                {/* Modal de edición/creación */}
+                <ModalEditarDoctor
+                  show={showEditModal}
+                  onHide={() => setShowEditModal(false)}
+                  onSubmit={handleSubmit}
+                  formData={formData}
+                  handleInputChange={handleInputChange}
+                  editingDoctor={editingDoctor}
+                  consultorios={consultorios}
+                />
+
+                {/* Modal de eliminación */}
+                <ModalEliminarDoctor
+                  show={showDeleteModal}
+                  onHide={() => setShowDeleteModal(false)}
+                  onConfirm={confirmDelete}
+                  doctorToDelete={doctorToDelete}
+                />
             </div>
-
-            {/* Modal de edición/creación */}
-            <Modal show={showEditModal} onHide={() => setShowEditModal(false)}>
-                <Modal.Header closeButton>
-                    <Modal.Title>{editingDoctor ? 'Editar Doctor' : 'Crear Doctor'}</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <Form onSubmit={handleSubmit}>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Nombres</Form.Label>
-                            <Form.Control
-                                type="text"
-                                name="Nombres"
-                                value={formData.Nombres}
-                                onChange={handleInputChange}
-                                required
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Apellidos</Form.Label>
-                            <Form.Control
-                                type="text"
-                                name="Apellidos"
-                                value={formData.Apellidos}
-                                onChange={handleInputChange}
-                                required
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Cargo</Form.Label>
-                            <Form.Control
-                                type="text"
-                                name="Cargo"
-                                value={formData.Cargo}
-                                onChange={handleInputChange}
-                                required
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Consultorio</Form.Label>
-                            <Form.Select
-                                name="Id_consultorio"
-                                value={formData.Id_consultorio}
-                                onChange={handleInputChange}
-                                required
-                            >
-                                <option value="">Seleccionar Consultorio</option>
-                                {consultorios.map((consultorio) => (
-                                    <option key={consultorio._id} value={consultorio._id}>
-                                        {consultorio.Nombre_consultorio}
-                                    </option>
-                                ))}
-                            </Form.Select>
-                        </Form.Group>
-                        <Button variant="primary" type="submit">
-                            Guardar
-                        </Button>
-                    </Form>
-                </Modal.Body>
-            </Modal>
-
-            {/* Modal de eliminación */}
-            <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
-                <Modal.Header closeButton>
-                    <Modal.Title>Confirmar Eliminación</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    ¿Estás seguro de que deseas eliminar al doctor <strong>{doctorToDelete?.Nombres}</strong>?
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
-                        Cancelar
-                    </Button>
-                    <Button variant="danger" onClick={confirmDelete}>
-                        Eliminar
-                    </Button>
-                </Modal.Footer>
-            </Modal>
         </div>
     );
 };

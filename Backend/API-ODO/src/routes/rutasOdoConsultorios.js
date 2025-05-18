@@ -102,7 +102,7 @@ const modelOdoConsultorio = express.Router();
  *             example:
  *               message: "Acceso denegado. Rol no permitido."
  */
-modelOdoConsultorio.post("/consultorios", verifyJWT, verifyRole(['ADMIN', 'JEFE']), crearconsultorio);
+modelOdoConsultorio.post("/consultorios", verifyJWT, verifyRole(['ADMIN', 'DOCTORA']), crearconsultorio);
 
 /**
  * @swagger
@@ -123,7 +123,7 @@ modelOdoConsultorio.post("/consultorios", verifyJWT, verifyRole(['ADMIN', 'JEFE'
  *               items:
  *                 $ref: '#/components/schemas/Consultorio'
  */
-modelOdoConsultorio.get("/consultorios", verifyJWT, verifyRole(['ADMIN', 'JEFE', 'RECEPCIONISTA']), llamarConsultorio);
+modelOdoConsultorio.get("/consultorios", verifyJWT, verifyRole(['ADMIN', 'DOCTORA', 'RECEPCIONISTA', 'PACIENTE']), llamarConsultorio);
 
 /**
  * @swagger
@@ -151,7 +151,7 @@ modelOdoConsultorio.get("/consultorios", verifyJWT, verifyRole(['ADMIN', 'JEFE',
  *       404:
  *         description: Consultorio no encontrado
  */
-modelOdoConsultorio.get("/consultorios/:_id", verifyJWT, verifyRole(['ADMIN', 'JEFE', 'RECEPCIONISTA', 'PACIENTE']), llamarConsultorioId);
+modelOdoConsultorio.get("/consultorios/:_id", verifyJWT, verifyRole(['ADMIN', 'DOCTORA', 'RECEPCIONISTA', 'PACIENTE']), llamarConsultorioId);
 
 /**
  * @swagger
@@ -183,7 +183,7 @@ modelOdoConsultorio.get("/consultorios/:_id", verifyJWT, verifyRole(['ADMIN', 'J
  *       404:
  *         description: Consultorio no encontrado
  */
-modelOdoConsultorio.patch("/consultorios/:_id", verifyJWT, verifyRole(['ADMIN', 'JEFE']), ActualizarConsultorio);
+modelOdoConsultorio.patch("/consultorios/:_id", verifyJWT, verifyRole(['ADMIN', 'DOCTORA']), ActualizarConsultorio);
 
 /**
  * @swagger

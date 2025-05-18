@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Carousel, Container, Row, Col, Collapse, Button } from "react-bootstrap";
-import PublicNavBar from "../components/NavBarPublico";
+import PublicNavBar from "../components/NavBar/NavBarPublico";
 import Footer from "../components/Footer";
 import Login from "../components/Login";
 import Register from "../components/Register";

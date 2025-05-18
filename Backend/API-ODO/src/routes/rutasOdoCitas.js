@@ -5,6 +5,7 @@ import {
   getCitaById,
   updateCita,
   deleteCita,
+  confirmarAsistencia,
 } from "../controller/controlOdoCitas.js";
 import { verifyJWT, verifyRole } from "../config/middlewareOdoAutenticacion.js";
 
@@ -91,7 +92,7 @@ const router = express.Router();
  *       400:
  *         description: Error en la solicitud
  */
-router.post("/citas", verifyJWT, verifyRole(['ADMIN', 'JEFE', 'RECEPCIONISTA', 'PACIENTE']), createCita);
+router.post("/citas", verifyJWT, verifyRole(['ADMIN', 'DOCTORA', 'RECEPCIONISTA', 'PACIENTE']), createCita);
 
 /**
  * @swagger
@@ -106,7 +107,7 @@ router.post("/citas", verifyJWT, verifyRole(['ADMIN', 'JEFE', 'RECEPCIONISTA', '
  *       500:
  *         description: Error del servidor
  */
-router.get("/citas", verifyJWT, verifyRole(['ADMIN', 'JEFE', 'RECEPCIONISTA']), getCitas);
+router.get("/citas", verifyJWT, verifyRole(['ADMIN', 'DOCTORA', 'RECEPCIONISTA', 'PACIENTE']), getCitas);
 
 /**
  * @swagger
@@ -128,7 +129,7 @@ router.get("/citas", verifyJWT, verifyRole(['ADMIN', 'JEFE', 'RECEPCIONISTA']), 
  *       404:
  *         description: Cita no encontrada
  */
-router.get("/citas/:_id", verifyJWT, verifyRole(['ADMIN', 'JEFE', 'RECEPCIONISTA', 'PACIENTE']), getCitaById);
+router.get("/citas/:_id", verifyJWT, verifyRole(['ADMIN', 'DOCTORA', 'RECEPCIONISTA', 'PACIENTE']), getCitaById);
 
 /**
  * @swagger
@@ -158,7 +159,31 @@ router.get("/citas/:_id", verifyJWT, verifyRole(['ADMIN', 'JEFE', 'RECEPCIONISTA
  *       404:
  *         description: Cita no encontrada
  */
-router.patch("/citas/:_id", verifyJWT, verifyRole(['ADMIN', 'JEFE', 'RECEPCIONISTA']), updateCita);
+router.patch("/citas/:_id", verifyJWT, verifyRole(['ADMIN', 'DOCTORA', 'RECEPCIONISTA']), updateCita);
+
+/**
+ * @swagger
+ * /citas/{_id}/confirmar:
+ *   patch:
+ *     summary: Confirmar la asistencia a una cita odontológica
+ *     description: Cambiar el estado de una cita a 'Terminado'.
+ *     tags: [Citas]
+ *     parameters:
+ *       - name: _id
+ *         in: path
+ *         required: true
+ *         description: El ID de la cita a confirmar
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Cita confirmada exitosamente
+ *       400:
+ *         description: Error en la solicitud de confirmación
+ *       404:
+ *         description: Cita no encontrada
+ */
+router.patch("/citas/:_id/confirmar", verifyJWT, verifyRole(['DOCTORA', 'ADMIN']), confirmarAsistencia);
 
 /**
  * @swagger
@@ -180,6 +205,6 @@ router.patch("/citas/:_id", verifyJWT, verifyRole(['ADMIN', 'JEFE', 'RECEPCIONIS
  *       404:
  *         description: Cita no encontrada
  */
-router.delete("/citas/:_id", verifyJWT, verifyRole(['ADMIN', 'JEFE']), deleteCita);
+router.delete("/citas/:_id", verifyJWT, verifyRole(['ADMIN', 'DOCTORA']), deleteCita);
 
 export default router;

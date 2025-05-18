@@ -36,6 +36,11 @@ const CitaSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  estado: {
+    type: String,
+    enum: ['Pendiente', 'Terminado'],
+    default: 'Pendiente',
+  },
 });
 
 export default mongoose.model('Cita', CitaSchema);

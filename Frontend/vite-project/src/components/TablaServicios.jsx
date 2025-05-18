@@ -6,6 +6,9 @@ import { Button, Table, Modal, Form, Nav } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { AuthContext } from '../contexts/AuthContext';
 import { tienePermiso } from '../utils/roles'; // <-- Importa la función de permisos
+import NavBarCrud from './NavBar/NavBarCrud';
+import { ModalEditarServicio, ModalEliminarServicio } from './Modales/ModalServicio';
+import '../styles/globalTableStyles.css';
 
 const API_URL = '/servicio';
 
@@ -17,7 +20,7 @@ const TablaServicios = () => {
     // Determina el rol mínimo requerido según la ruta
     let rutaRol = "";
     if (location.pathname.startsWith('/admin')) rutaRol = "ADMIN";
-    else if (location.pathname.startsWith('/jefe')) rutaRol = "JEFE";
+    else if (location.pathname.startsWith('/doctora')) rutaRol = "DOCTORA";
     else if (location.pathname.startsWith('/recepcionista')) rutaRol = "RECEPCIONISTA";
 
     // Obtiene el rol real del usuario
@@ -43,7 +46,7 @@ const TablaServicios = () => {
     const [formErrors, setFormErrors] = useState({});
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    const serviciosPerPage = 10;
+    const itemsPerPage = 10;
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
@@ -161,10 +164,10 @@ const TablaServicios = () => {
         servicio.Nombre?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const indexOfLastServicio = currentPage * serviciosPerPage;
-    const indexOfFirstServicio = indexOfLastServicio - serviciosPerPage;
-    const currentServicios = filteredServicios.slice(indexOfFirstServicio, indexOfLastServicio);
-
+    const indexOfLast = currentPage * itemsPerPage;
+    const indexOfFirst = indexOfLast - itemsPerPage;
+    const currentItems = filteredServicios.slice(indexOfFirst, indexOfLast);
+    const totalPages = Math.ceil(filteredServicios.length / itemsPerPage);
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
     if (loading) return <div>Cargando servicios...</div>;
@@ -181,7 +184,7 @@ const TablaServicios = () => {
             { key: 'consultorios', label: 'Consultorios', icon: <FaClinicMedical className="me-2" /> },
             { key: 'doctores', label: 'Doctores', icon: <FaUserMd className="me-2" /> },
         ],
-        JEFE: [
+        DOCTORA: [
             { key: 'usuarios', label: 'Usuarios', icon: <FaUserCog className="me-2" /> },
             { key: 'permisos', label: 'Permisos', icon: <FaKey className="me-2" /> },
             { key: 'servicios', label: 'Servicios', icon: <FaCogs className="me-2" /> },
@@ -199,7 +202,7 @@ const TablaServicios = () => {
     // Función para obtener el prefijo de ruta según el rol
     const getBasePath = (rol) => {
         if (rol === "ADMIN") return "/admin";
-        if (rol === "JEFE") return "/jefe";
+        if (rol === "DOCTORA") return "/doctora";
         if (rol === "RECEPCIONISTA") return "/recepcionista";
         return "/";
     };
@@ -214,63 +217,8 @@ const TablaServicios = () => {
 
     return (
         <div className="d-flex" style={{ minHeight: '100vh', backgroundColor: colorScheme.light }}>
-            {/* Sidebar */}
-            <div
-                className={`d-flex flex-column ${isMobile ? 'position-fixed' : ''}`}
-                style={{
-                    width: isMobile ? '75%' : '250px',
-                    height: '100vh',
-                    zIndex: 1000,
-                    transform: isMobile && !sidebarOpen ? 'translateX(-100%)' : 'translateX(0)',
-                    transition: 'transform 0.3s ease',
-                    backgroundColor: colorScheme.primary,
-                    color: colorScheme.light,
-                }}
-            >
-                <div className="p-3 d-flex justify-content-between align-items-center border-bottom" style={{ borderColor: colorScheme.secondary }}>
-                    <div className="d-flex align-items-center">
-                        <Link
-                            to="/admin"
-                            className="text-light text-decoration-none d-flex align-items-center"
-                            onClick={() => isMobile && setSidebarOpen(false)}
-                        >
-                            <FaUserCog className="me-2" size={24} />
-                            <h5 className="mb-0">Panel de Control</h5>
-                        </Link>
-                    </div>
-                    {isMobile && (
-                        <Button
-                            variant="link"
-                            className="p-0 text-light"
-                            onClick={() => setSidebarOpen(false)}
-                        >
-                            <FaTimes size={20} />
-                        </Button>
-                    )}
-                </div>
-
-                <Nav variant="pills" className="flex-column p-3">
-                    {menuItems.map((item) => (
-                        <Nav.Item key={item.path} className="mb-2">
-                            <Nav.Link
-                                as={Link}
-                                to={item.path}
-                                className="text-white d-flex align-items-center"
-                                style={{
-                                    backgroundColor: 'transparent',
-                                    borderRadius: '4px',
-                                    border: 'none',
-                                }}
-                                onClick={() => isMobile && setSidebarOpen(false)}
-                            >
-                                {item.icon}
-                                {item.label}
-                            </Nav.Link>
-                        </Nav.Item>
-                    ))}
-                </Nav>
-            </div>
-
+            {/* Sidebar NavBarCrud */}
+            <NavBarCrud colorScheme={colorScheme} userRol={userRol} />
             {/* Main Content */}
             <div className="flex-grow-1 p-4">
                 <h1 className="text-center mb-4">Gestión de Servicios</h1>
@@ -302,7 +250,7 @@ const TablaServicios = () => {
                     )}
                 </div>
                 <div className="table-responsive shadow-sm rounded">
-                    <Table striped hover className="mb-0">
+                    <Table responsive striped hover className="mb-0">
                         <thead style={{ backgroundColor: colorScheme.primary, color: colorScheme.light }}>
                             <tr>
                                 <th>Nombre</th>
@@ -313,7 +261,7 @@ const TablaServicios = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {currentServicios.map((servicio) => (
+                            {currentItems.map((servicio) => (
                                 <tr key={servicio._id}>
                                     <td>{servicio.Nombre}</td>
                                     <td>{servicio.Descripcion}</td>
@@ -347,97 +295,32 @@ const TablaServicios = () => {
                 </div>
                 <nav>
                     <ul className="pagination">
-                        {Array.from({ length: Math.ceil(filteredServicios.length / serviciosPerPage) }, (_, index) => (
-                            <li key={index} className={`page-item ${currentPage === index + 1 ? 'active' : ''}`}>
-                                <button className="page-link" onClick={() => paginate(index + 1)}>
-                                    {index + 1}
-                                </button>
+                        {Array.from({ length: totalPages }, (_, i) => (
+                            <li key={i} className={`page-item ${currentPage === i + 1 ? 'active' : ''}`}>
+                                <button className="page-link" onClick={() => paginate(i + 1)}>{i + 1}</button>
                             </li>
                         ))}
                     </ul>
                 </nav>
 
                 {/* Modal de edición */}
-                <Modal show={showEditModal} onHide={() => setShowEditModal(false)}>
-                    <Modal.Header closeButton>
-                        <Modal.Title>{editingServicio ? 'Editar Servicio' : 'Crear Servicio'}</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <Form onSubmit={handleSubmit}>
-                            <Form.Group className="mb-3">
-                                <Form.Label>Nombre</Form.Label>
-                                <Form.Control
-                                    type="text"
-                                    name="Nombre"
-                                    value={formData.Nombre}
-                                    onChange={handleInputChange}
-                                    isInvalid={!!formErrors.Nombre}
-                                />
-                                <Form.Control.Feedback type="invalid">
-                                    {formErrors.Nombre}
-                                </Form.Control.Feedback>
-                            </Form.Group>
-                            <Form.Group className="mb-3">
-                                <Form.Label>Descripción</Form.Label>
-                                <Form.Control
-                                    type="text"
-                                    name="Descripcion"
-                                    value={formData.Descripcion}
-                                    onChange={handleInputChange}
-                                    isInvalid={!!formErrors.Descripcion}
-                                />
-                                <Form.Control.Feedback type="invalid">
-                                    {formErrors.Descripcion}
-                                </Form.Control.Feedback>
-                            </Form.Group>
-                            <Form.Group className="mb-3">
-                                <Form.Label>Disponible</Form.Label>
-                                <Form.Select
-                                    name="Disponible"
-                                    value={formData.Disponible}
-                                    onChange={handleInputChange}
-                                >
-                                    <option value="Activo">Activo</option>
-                                    <option value="Inactivo">Inactivo</option>
-                                </Form.Select>
-                            </Form.Group>
-                            <Form.Group className="mb-3">
-                                <Form.Label>Precio</Form.Label>
-                                <Form.Control
-                                    type="number"
-                                    name="Precio"
-                                    value={formData.Precio}
-                                    onChange={handleInputChange}
-                                    isInvalid={!!formErrors.Precio}
-                                />
-                                <Form.Control.Feedback type="invalid">
-                                    {formErrors.Precio}
-                                </Form.Control.Feedback>
-                            </Form.Group>
-                            <Button variant="primary" type="submit">
-                                Guardar Cambios
-                            </Button>
-                        </Form>
-                    </Modal.Body>
-                </Modal>
+                <ModalEditarServicio
+                  show={showEditModal}
+                  onHide={() => setShowEditModal(false)}
+                  onSubmit={handleSubmit}
+                  formData={formData}
+                  formErrors={formErrors}
+                  handleInputChange={handleInputChange}
+                  editingServicio={editingServicio}
+                />
 
                 {/* Modal de eliminación */}
-                <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
-                    <Modal.Header closeButton>
-                        <Modal.Title>Confirmar Eliminación</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        ¿Estás seguro de que deseas eliminar el servicio <strong>{servicioToDelete?.Nombre}</strong>?
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
-                            Cancelar
-                        </Button>
-                        <Button variant="danger" onClick={confirmDelete}>
-                            Eliminar
-                        </Button>
-                    </Modal.Footer>
-                </Modal>
+                <ModalEliminarServicio
+                  show={showDeleteModal}
+                  onHide={() => setShowDeleteModal(false)}
+                  onConfirm={confirmDelete}
+                  servicioToDelete={servicioToDelete}
+                />
             </div>
         </div>
     );

@@ -1,52 +1,23 @@
 // models/HistorialClinico.js
 import mongoose from "mongoose";
 
+const controlSchema = new mongoose.Schema({
+  fecha_control: { type: Date, required: true, default: Date.now },
+  motivo_consulta: { type: String, required: true },
+  diagnostico: { type: String, required: true },
+  procedimiento_realizado: { type: String, required: true },
+  tratamiento_propuesto: { type: String },
+  evolucion: { type: String },
+  recomendaciones: { type: String },
+  odontologo_responsable: { type: mongoose.Schema.Types.ObjectId, ref: "Doctora", required: true }
+}, { _id: true });
+
 const historialClinicoSchema = new mongoose.Schema({
-  paciente: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Usuario", // Paciente que recibió el tratamiento
-    required: true,
-  },
-  cita: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Cita", // Cita asociada al historial clínico
-    required: true,
-  },
-  servicio: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Servicios", // Tratamiento realizado
-    required: true,
-  },
-  doctora: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Doctora", // Quien atendió
-    required: true,
-  },
-  consultorio: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Consultorio", // Lugar donde fue atendido
-    required: true,
-  },
-  descripcionTratamiento: {
-    type: String,
-    required: [true, "La descripción del tratamiento es obligatoria"],
-    maxlength: [1000, "La descripción no puede exceder los 1000 caracteres"]
-  },
-  fechaAtencion: {
-    type: Date,
-    required: [true, "La fecha de atención es obligatoria"]
-  },
-  observaciones: {
-    type: String,
-    default: "",
-    maxlength: [500, "Las observaciones no pueden exceder los 500 caracteres"]
-  },
-  archivoAdjunto: {
-    type: String, // Podría ser una URL de imagen o PDF (si decides subir archivos)
-    default: null,
-  }
-}, {
-  timestamps: true // Crea campos createdAt y updatedAt
+  paciente: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true, unique: true },
+  fecha_creacion: { type: Date, default: Date.now },
+  observaciones_generales: { type: String },
+  responsable_creacion: { type: mongoose.Schema.Types.ObjectId, ref: "Doctora", required: true },
+  controles: [controlSchema]
 });
 
 export default mongoose.model("HistorialClinico", historialClinicoSchema);

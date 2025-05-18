@@ -69,7 +69,7 @@ const modelOdoServicios = express.Router();
  *       400:
  *         description: Error en la información del servicio.
  */
-modelOdoServicios.post("/servicio", verifyJWT, verifyRole(['ADMIN', 'JEFE']), createServicio);;
+modelOdoServicios.post("/servicio", verifyJWT, verifyRole(['ADMIN', 'DOCTORA']), createServicio);;
 
 /**
  * @swagger
@@ -88,7 +88,7 @@ modelOdoServicios.post("/servicio", verifyJWT, verifyRole(['ADMIN', 'JEFE']), cr
  *               items:
  *                 $ref: '#/components/schemas/Serv'
  */
-modelOdoServicios.get("/servicio", verifyJWT, verifyRole(['ADMIN', 'JEFE', 'RECEPCIONISTA', 'PACIENTE']), getServicio);
+modelOdoServicios.get("/servicio", verifyJWT, verifyRole(['ADMIN', 'DOCTORA', 'RECEPCIONISTA', 'PACIENTE']), getServicio);
 
 /**
  * @swagger
@@ -114,7 +114,7 @@ modelOdoServicios.get("/servicio", verifyJWT, verifyRole(['ADMIN', 'JEFE', 'RECE
  *       404:
  *         description: Servicio no encontrado
  */
-modelOdoServicios.get("/servicio/:_id", verifyJWT, verifyRole(['ADMIN', 'JEFE', 'RECEPCIONISTA', 'PACIENTE']), getServicioId);
+modelOdoServicios.get("/servicio/:_id", verifyJWT, verifyRole(['ADMIN', 'DOCTORA', 'RECEPCIONISTA', 'PACIENTE']), getServicioId);
 
 /**
  * @swagger
@@ -144,7 +144,7 @@ modelOdoServicios.get("/servicio/:_id", verifyJWT, verifyRole(['ADMIN', 'JEFE', 
  *       404:
  *         description: Servicio no encontrado
  */
-modelOdoServicios.patch("/servicio/:_id", verifyJWT, verifyRole(['ADMIN', 'JEFE']), updateServicio);
+modelOdoServicios.patch("/servicio/:_id", verifyJWT, verifyRole(['ADMIN', 'DOCTORA']), updateServicio);
 
 /**
  * @swagger

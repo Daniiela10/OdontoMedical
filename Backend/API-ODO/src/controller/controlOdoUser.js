@@ -16,7 +16,18 @@ export const crearusuario = [
   validatorHandler(createUserSchema, "body"),
   async (req, res) => {
     try {
-      const { Nombre, Apellido, Tipo_Doc, Doc_identificacion, Telefono, Correo, Clave, Permiso } = req.body;
+      const {
+        Nombre,
+        Apellido,
+        Tipo_Doc,
+        Doc_identificacion,
+        Telefono,
+        Correo,
+        Clave,
+        Permiso,
+        Genero,
+        Edad,
+      } = req.body;
 
       // Verificar que el campo Permiso esté presente
       if (!Permiso) {
@@ -33,6 +44,8 @@ export const crearusuario = [
         Correo,
         Clave: hashedPassword,
         Permiso,
+        Genero,
+        Edad,
       });
 
       const data = await user.save();
@@ -73,7 +86,18 @@ export const ActualizarUsu = [
   validatorHandler(updateUserSchema, "body"),
   async (req, res) => {
     const { _id } = req.params;
-    const { Nombre, Apellido, Tipo_Doc, Doc_identificacion, Telefono, Correo, Clave, Permiso } = req.body;
+    const {
+      Nombre,
+      Apellido,
+      Tipo_Doc,
+      Doc_identificacion,
+      Telefono,
+      Correo,
+      Clave,
+      Permiso,
+      Genero,
+      Edad,
+    } = req.body;
     if (!Permiso) {
       return res.status(400).json({ message: "El campo Permiso es obligatorio" });
     }
@@ -88,6 +112,8 @@ export const ActualizarUsu = [
         Telefono,
         Correo,
         Permiso,
+        Genero,
+        Edad,
       };
 
       if (hashedPassword) {

@@ -1,40 +1,34 @@
 import React, { useState, useEffect, useContext } from 'react';
 import api from '../API/axiosInstance';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Modal, Button, Form, Table, InputGroup, Spinner, Alert, Container, Nav } from 'react-bootstrap';
-import { FaSearch, FaEdit, FaTrash, FaUserCog, FaBars, FaSignOutAlt, FaTimes, FaKey, FaCogs, FaCalendarAlt, FaFileMedical, FaClinicMedical, FaUserMd } from 'react-icons/fa';
+import { Table, Spinner, Alert, InputGroup, Form, Container, Button } from 'react-bootstrap';
+import { FaSearch, FaUser, FaCalendarAlt, FaClinicMedical, FaEdit, FaTrash, FaPlus, FaUserMd, FaHistory, FaKey, FaConciergeBell } from 'react-icons/fa';
 import { AuthContext } from '../contexts/AuthContext';
 import { tienePermiso } from '../utils/roles';
+import NavBarCrud from './NavBar/NavBarCrud';
+// Importa los modales ya hechos
+import { ModalEditarUsuario, ModalCrearUsuario, ModalEliminarUsuario } from './Modales/ModalUser';
+import '../styles/globalTableStyles.css';
 
 const API_URL = '/users';
 
+const colorScheme = {
+  primary: '#2c3e50',
+  light: '#ecf0f1',
+  dark: '#2c3e50',
+  secondary: '#bdc3c7'
+};
+
 const TablaUser = () => {
   // Contexto de autenticación
-  const { user, setUser } = useContext(AuthContext);
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  // Determina el rol mínimo requerido según la ruta
-  let rutaRol = "";
-  if (location.pathname.startsWith('/admin')) rutaRol = "ADMIN";
-  else if (location.pathname.startsWith('/jefe')) rutaRol = "JEFE";
-  else if (location.pathname.startsWith('/recepcionista')) rutaRol = "RECEPCIONISTA";
-
-  // Obtiene el rol real del usuario
+  const { user } = useContext(AuthContext);
   const userRol = typeof user.Permiso === "string" ? user.Permiso : user.Permiso?.rol || "";
 
-  // LOG para depuración
-  console.log("user:", user);
-  console.log("userRol:", userRol);
-  console.log("rutaRol:", rutaRol);
+  // Permisos
+  const puedeVer = tienePermiso(userRol, "ADMIN") || tienePermiso(userRol, "DOCTORA") || tienePermiso(userRol, "RECEPCIONISTA");
+  const puedeCrear = tienePermiso(userRol, "ADMIN") || tienePermiso(userRol, "DOCTORA") || tienePermiso(userRol, "RECEPCIONISTA");
+  const puedeEditar = tienePermiso(userRol, "ADMIN") || tienePermiso(userRol, "DOCTORA") || tienePermiso(userRol, "RECEPCIONISTA");
+  const puedeEliminar = tienePermiso(userRol, "ADMIN") || tienePermiso(userRol, "DOCTORA");  
 
-  // Permisos por jerarquía
-  const puedeVer = tienePermiso(userRol, rutaRol);
-  const puedeCrear = tienePermiso(userRol, rutaRol);
-  const puedeEditar = tienePermiso(userRol, rutaRol);
-  const puedeBorrar = userRol === "ADMIN"; // Solo ADMIN puede borrar usuarios
-
-  // Si no puede ver, no renderiza nada
   if (!puedeVer) return <div>No tienes permisos para ver esta tabla.</div>;
 
   // Estados principales
@@ -42,51 +36,39 @@ const TablaUser = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  // Estados para el modal de edición
+  // Estados para modales
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editingUser, setEditingUser] = useState(null);
-  const [formData, setFormData] = useState({
-    Nombre: '',
-    Apellido: '',
-    Tipo_Doc: '',
-    Doc_identificacion: '',
-    Telefono: '',
-    Correo: '',
-    Permiso: '',
-    Clave: ''
-  });
-  const [formErrors, setFormErrors] = useState({});
-
-  // Estado para el modal de confirmación de borrado
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [userToDelete, setUserToDelete] = useState(null);
-
-  // Estado para el modal de crear usuario
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [formData, setFormData] = useState({});
+  const [formErrors, setFormErrors] = useState({});
+  const [userToDelete, setUserToDelete] = useState(null);
+  const [permisos, setPermisos] = useState([]);
 
-  const colorScheme = {
-    primary: '#2c3e50',
-    secondary: '#34495e',
-    accent: '#3498db',
-    danger: '#e74c3c',
-    light: '#ecf0f1',
-    dark: '#2c3e50'
-  };
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const indexOfLast = currentPage * itemsPerPage;
+  const indexOfFirst = indexOfLast - itemsPerPage;
+  const currentItems = users.slice(indexOfFirst, indexOfLast);
+  const totalPages = Math.ceil(users.length / itemsPerPage);
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-      if (window.innerWidth >= 768) setSidebarOpen(false);
-    };
-
-    window.addEventListener('resize', handleResize);
     fetchUsers();
-    return () => window.removeEventListener('resize', handleResize);
+    fetchPermisos();
     // eslint-disable-next-line
-  }, [location.pathname]);
+  }, []);
+
+  const fetchPermisos = async () => {
+    try {
+      // Ajusta la ruta si tu backend la tiene diferente
+      const response = await api.get('/permisos');
+      setPermisos(response.data);
+    } catch (error) {
+      setPermisos([]);
+    }
+  };
 
   const fetchUsers = async () => {
     try {
@@ -101,77 +83,6 @@ const TablaUser = () => {
     }
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-    if (formErrors[name]) {
-      setFormErrors({ ...formErrors, [name]: null });
-    }
-  };
-
-  const validateForm = () => {
-    const errors = {};
-    if (!formData.Nombre.trim()) errors.Nombre = 'Nombre es requerido';
-    if (!formData.Apellido.trim()) errors.Apellido = 'Apellido es requerido';
-    if (!formData.Doc_identificacion.trim()) errors.Doc_identificacion = 'Documento es requerido';
-    return errors;
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const errors = validateForm();
-
-    if (Object.keys(errors).length > 0) {
-      setFormErrors(errors);
-      return;
-    }
-
-    try {
-      if (editingUser) {
-        await api.patch(`${API_URL}/${editingUser._id}`, formData);
-      } else {
-        await api.post(API_URL, formData);
-      }
-      setShowEditModal(false);
-      setShowCreateModal(false);
-      await fetchUsers();
-    } catch (error) {
-      setError(editingUser ? 'Error al actualizar el usuario.' : 'Error al crear el usuario.');
-    }
-  };
-
-  const handleEdit = (user) => {
-    setEditingUser(user);
-    setFormData({
-      Nombre: user.Nombre || '',
-      Apellido: user.Apellido || '',
-      Tipo_Doc: user.Tipo_Doc || '',
-      Doc_identificacion: user.Doc_identificacion || '',
-      Telefono: user.Telefono || '',
-      Correo: user.Correo || '',
-      Permiso: user.Permiso?._id || user.Permiso || '',
-      Clave: ''
-    });
-    setFormErrors({});
-    setShowEditModal(true);
-    if (isMobile) setSidebarOpen(false);
-  };
-
-  const handleDeleteClick = (user) => {
-    setUserToDelete(user);
-    setShowDeleteModal(true);
-  };
-
-  const confirmDelete = async () => {
-    try {
-      await api.delete(`${API_URL}/${userToDelete._id}`);
-      setShowDeleteModal(false);
-      await fetchUsers();
-    } catch (error) {
-      setError('Error al eliminar el usuario.');
-    }
-  };
-
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
   };
@@ -182,200 +93,143 @@ const TablaUser = () => {
     user.Apellido?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Lógica para cerrar sesión
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('roles');
-    sessionStorage.clear();
-    if (setUser) setUser(null); // Limpia el contexto si es posible
-    navigate('/');
+  // Handlers para modales
+  const handleOpenEdit = (user) => {
+    setFormData({
+      ...user,
+      Clave: '',
+      Permiso: user.Permiso?._id || user.Permiso // Asegura que Permiso sea el _id
+    });
+    setFormErrors({});
+    setShowEditModal(true);
   };
 
-  // Configuración de vistas permitidas por rol
-  const menuConfig = {
-    ADMIN: [
-      { key: 'usuarios', label: 'Usuarios', icon: <FaUserCog className="me-2" /> },
-      { key: 'permisos', label: 'Permisos', icon: <FaKey className="me-2" /> },
-      { key: 'servicios', label: 'Servicios', icon: <FaCogs className="me-2" /> },
-      { key: 'citas', label: 'Citas', icon: <FaCalendarAlt className="me-2" /> },
-      { key: 'historiales', label: 'Historiales', icon: <FaFileMedical className="me-2" /> },
-      { key: 'consultorios', label: 'Consultorios', icon: <FaClinicMedical className="me-2" /> },
-      { key: 'doctores', label: 'Doctores', icon: <FaUserMd className="me-2" /> },
-    ],
-    JEFE: [
-      { key: 'usuarios', label: 'Usuarios', icon: <FaUserCog className="me-2" /> },
-      { key: 'permisos', label: 'Permisos', icon: <FaKey className="me-2" /> },
-      { key: 'servicios', label: 'Servicios', icon: <FaCogs className="me-2" /> },
-      { key: 'historiales', label: 'Historiales', icon: <FaFileMedical className="me-2" /> },
-      { key: 'consultorios', label: 'Consultorios', icon: <FaClinicMedical className="me-2" /> },
-      { key: 'doctores', label: 'Doctores', icon: <FaUserMd className="me-2" /> },
-    ],
-    RECEPCIONISTA: [
-      { key: 'usuarios', label: 'Usuarios', icon: <FaUserCog className="me-2" /> },
-      { key: 'historiales', label: 'Historiales', icon: <FaFileMedical className="me-2" /> },
-      { key: 'consultorios', label: 'Consultorios', icon: <FaClinicMedical className="me-2" /> },
-    ],
+  const handleOpenCreate = () => {
+    setFormData({
+      Nombre: '',
+      Apellido: '',
+      Tipo_Doc: '',
+      Doc_identificacion: '',
+      Telefono: '',
+      Correo: '',
+      Edad: '',
+      Genero: '',
+      Permiso: '',
+      Clave: ''
+    });
+    setFormErrors({});
+    setShowCreateModal(true);
   };
 
-  // Función para obtener el prefijo de ruta según el rol
-  const getBasePath = (rol) => {
-    if (rol === "ADMIN") return "/admin";
-    if (rol === "JEFE") return "/jefe";
-    if (rol === "RECEPCIONISTA") return "/recepcionista";
-    return "/";
+  const handleOpenDelete = (user) => {
+    setUserToDelete(user);
+    setShowDeleteModal(true);
   };
 
-  const basePath = getBasePath(userRol);
+  // Simulación de validación y envío (ajusta según tu lógica real)
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    // Solo los campos válidos
+    const {
+      Nombre,
+      Apellido,
+      Tipo_Doc,
+      Doc_identificacion,
+      Telefono,
+      Correo,
+      Clave,
+      Permiso,
+      Genero,
+      Edad
+    } = formData;
 
-  // Genera el menú filtrado según el rol
-  const menuItems = (menuConfig[userRol] || []).map(item => ({
-    ...item,
-    path: `${basePath}/${item.key}`
-  }));
+    const dataToSend = {
+      Nombre,
+      Apellido,
+      Tipo_Doc,
+      Doc_identificacion,
+      Telefono: Number(Telefono),
+      Correo,
+      Permiso,
+      Genero,
+      Edad: Number(Edad)
+    };
+
+    // Solo agrega Clave si existe y no está vacía
+    if (Clave) dataToSend.Clave = Clave;
+
+    try {
+      await api.patch(`${API_URL}/${formData._id}`, dataToSend);
+      setShowEditModal(false);
+      fetchUsers();
+    } catch (err) {
+      setFormErrors({ general: 'Error al actualizar usuario.' });
+    }
+  };
+
+  const handleCreateSubmit = async (e) => {
+    e.preventDefault();
+    // Convierte los campos a número y usa el _id del permiso
+    const dataToSend = {
+      ...formData,
+      Telefono: Number(formData.Telefono),
+      Edad: Number(formData.Edad),
+      Permiso: formData.Permiso, // Debe ser el _id, no el nombre
+    };
+    try {
+      await api.post(API_URL, dataToSend);
+      setShowCreateModal(false);
+      fetchUsers();
+    } catch (err) {
+      setFormErrors({ general: 'Error al crear usuario.' });
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    try {
+      await api.delete(`${API_URL}/${userToDelete._id}`);
+      setShowDeleteModal(false);
+      fetchUsers();
+    } catch (err) {
+      setError('Error al eliminar usuario.');
+    }
+  };
+
+  const handleInputChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   return (
-    <div className="d-flex" style={{ minHeight: '100vh', backgroundColor: colorScheme.light }}>
+    <div style={{ minHeight: '100vh', backgroundColor: colorScheme.light, display: 'flex' }}>
       {/* Sidebar */}
-      <div
-        className={`d-flex flex-column ${isMobile ? 'position-fixed' : ''}`}
-        style={{
-          width: isMobile ? '75%' : '250px',
-          height: '100vh',
-          zIndex: 1000,
-          transform: isMobile && !sidebarOpen ? 'translateX(-100%)' : 'translateX(0)',
-          transition: 'transform 0.3s ease',
-          backgroundColor: colorScheme.primary,
-          color: colorScheme.light
-        }}
-      >
-        <div className="p-3 d-flex justify-content-between align-items-center border-bottom" style={{ borderColor: colorScheme.secondary }}>
-          <div className="d-flex align-items-center">
-            <Link
-              to="/admin"
-              className="text-light text-decoration-none d-flex align-items-center"
-              onClick={() => isMobile && setSidebarOpen(false)}
-            >
-              <FaUserCog className="me-2" size={24} />
-              <h5 className="mb-0">Panel de Control</h5>
-            </Link>
-          </div>
-          {isMobile && (
-            <Button
-              variant="link"
-              className="p-0 text-light"
-              onClick={() => setSidebarOpen(false)}
-            >
-              <FaTimes size={20} />
-            </Button>
-          )}
-        </div>
+      <NavBarCrud colorScheme={colorScheme} userRol={userRol} />
 
-        <Nav variant="pills" className="flex-column p-3">
-          {menuItems.map((item) => (
-            <Nav.Item key={item.path} className="mb-2">
-              <Nav.Link
-                as={Link}
-                to={item.path}
-                className="text-white d-flex align-items-center"
-                style={{
-                  backgroundColor: 'transparent',
-                  borderRadius: '4px',
-                  border: 'none',
-                }}
-                onClick={() => isMobile && setSidebarOpen(false)}
-              >
-                {item.icon}
-                {item.label}
-              </Nav.Link>
-            </Nav.Item>
-          ))}
-        </Nav>
-      </div>
-
-      {/* Overlay para móviles */}
-      {isMobile && sidebarOpen && (
-        <div
-          className="position-fixed"
-          style={{
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            zIndex: 999,
-            backgroundColor: 'rgba(0,0,0,0.5)'
-          }}
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Main Content */}
-      <div
-        className="flex-grow-1"
-        style={{
-          marginLeft: isMobile ? '0' : '250px',
-          transition: 'margin-left 0.3s ease',
-          overflowX: 'hidden'
-        }}
-      >
-        {/* Mobile Header */}
-        {isMobile && (
-          <div
-            className="d-flex justify-content-between align-items-center p-3"
-            style={{
-              backgroundColor: colorScheme.primary,
-              color: colorScheme.light
-            }}
-          >
-            <Button
-              variant="link"
-              className="p-0 text-light"
-              onClick={() => setSidebarOpen(true)}
-            >
-              <FaBars size={20} />
-            </Button>
-            <h5 className="mb-0">Gestión de Usuarios</h5>
-            <Button
-              variant="link"
-              className="p-0 text-light"
-              onClick={handleLogout}
-            >
-              <FaSignOutAlt size={20} />
-            </Button>
-          </div>
-        )}
-
-        <Container fluid className="py-4 px-3 px-md-4">
-          {!isMobile && (
-            <div className="d-flex justify-content-between align-items-center mb-4">
-              <h1 style={{ color: colorScheme.dark }}>Gestión de Usuarios</h1>
-              <Button
-                variant="outline-light"
-                style={{
-                  color: colorScheme.dark,
-                  borderColor: colorScheme.dark
-                }}
-                onClick={handleLogout}
-              >
-                <FaSignOutAlt className="me-1" /> Cerrar Sesión
+      {/* Contenido principal */}
+      <div style={{ flex: 1, padding: '40px 24px 24px 24px', maxWidth: '100vw' }}>
+        <Container fluid className="py-2 px-0">
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <h1 style={{ color: colorScheme.dark, fontWeight: 700, marginBottom: 0 }}>Gestión de Usuarios</h1>
+            {puedeCrear && (
+              <Button variant="primary" onClick={handleOpenCreate}>
+                <FaPlus className="me-2" /> Crear Usuario
               </Button>
-            </div>
-          )}
-
+            )}
+          </div>
           {error && (
             <Alert
               variant="danger"
               dismissible
               onClose={() => setError(null)}
-              style={{ backgroundColor: colorScheme.danger, color: 'white' }}
+              style={{ backgroundColor: "#e74c3c", color: 'white' }}
             >
               {error}
             </Alert>
           )}
 
           {/* Search Bar */}
-          <InputGroup className="mb-4 shadow-sm">
+          <InputGroup className="mb-4 shadow-sm" style={{ maxWidth: 500 }}>
             <InputGroup.Text style={{
-              backgroundColor: colorScheme.accent,
+              backgroundColor: "#3498db",
               color: 'white',
               border: 'none'
             }}>
@@ -391,183 +245,104 @@ const TablaUser = () => {
 
           {loading ? (
             <div className="text-center my-5">
-              <Spinner animation="border" style={{ color: colorScheme.accent }} />
+              <Spinner animation="border" style={{ color: "#3498db" }} />
               <p className="mt-2" style={{ color: colorScheme.dark }}>Cargando usuarios...</p>
             </div>
           ) : (
-            <>
-              {/* Botón de crear usuario */}
-              {puedeCrear && (
-                <Button
-                  variant="success"
-                  className="mb-3"
-                  onClick={() => {
-                    setFormData({
-                      Nombre: '',
-                      Apellido: '',
-                      Tipo_Doc: '',
-                      Doc_identificacion: '',
-                      Telefono: '',
-                      Correo: '',
-                      Permiso: '',
-                      Clave: ''
-                    });
-                    setFormErrors({});
-                    setShowCreateModal(true);
-                  }}
-                >
-                  Crear Usuario
-                </Button>
-              )}
-
-              {/* Users Table */}
-              <div className="table-responsive shadow-sm rounded">
-                <Table striped hover className="mb-0">
-                  <thead style={{ backgroundColor: colorScheme.primary, color: colorScheme.light }}>
-                    <tr>
-                      <th>Nombre</th>
-                      <th>Apellido</th>
-                      <th>Tipo de Documento</th>
-                      <th>Identificación</th>
-                      <th>Teléfono</th>
-                      <th>Correo</th>
-                      <th>Permiso</th>
-                      <th>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredUsers.map(user => (
-                      <tr key={user._id}>
-                        <td>{user.Nombre}</td>
-                        <td>{user.Apellido}</td>
-                        <td>{user.Tipo_Doc}</td>
-                        <td>{user.Doc_identificacion}</td>
-                        <td>{user.Telefono}</td>
-                        <td>{user.Correo}</td>
-                        <td>{user.Permiso?.rol || 'N/A'}</td>
+            <div className="table-responsive shadow-sm rounded" style={{ background: "#fff", padding: 16 }}>
+              <Table responsive striped hover className="mb-0 align-middle">
+                <thead style={{ backgroundColor: colorScheme.primary, color: colorScheme.light }}>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Apellido</th>
+                    <th>Tipo de Documento</th>
+                    <th>Identificación</th>
+                    <th>Teléfono</th>
+                    <th>Correo</th>
+                    <th>Edad</th>
+                    <th>Género</th>
+                    <th>Permiso</th>
+                    {(puedeEditar || puedeEliminar) && <th>Acciones</th>}
+                  </tr>
+                </thead>
+                <tbody>
+                  {currentItems.map(user => (
+                    <tr key={user._id}>
+                      <td>{user.Nombre}</td>
+                      <td>{user.Apellido}</td>
+                      <td>{user.Tipo_Doc}</td>
+                      <td>{user.Doc_identificacion}</td>
+                      <td>{user.Telefono}</td>
+                      <td>{user.Correo}</td>
+                      <td>{user.Edad}</td>
+                      <td>{user.Genero}</td>
+                      <td>{user.Permiso?.rol || user.Permiso || 'N/A'}</td>
+                      {(puedeEditar || puedeEliminar) && (
                         <td>
                           {puedeEditar && (
-                            <Button variant="outline-primary" size="sm" className="me-2" onClick={() => handleEdit(user)}>
+                            <Button
+                              variant="outline-primary"
+                              size="sm"
+                              className="me-2"
+                              onClick={() => handleOpenEdit(user)}
+                            >
                               <FaEdit />
                             </Button>
                           )}
-                          {puedeBorrar && (
-                            <Button variant="outline-danger" size="sm" onClick={() => handleDeleteClick(user)}>
+                          {puedeEliminar && (
+                            <Button
+                              variant="outline-danger"
+                              size="sm"
+                              onClick={() => handleOpenDelete(user)}
+                            >
                               <FaTrash />
                             </Button>
                           )}
                         </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </Table>
-              </div>
-            </>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+              <nav>
+                <ul className="pagination">
+                  {Array.from({ length: totalPages }, (_, i) => (
+                    <li key={i} className={`page-item ${currentPage === i + 1 ? 'active' : ''}`}>
+                      <button className="page-link" onClick={() => paginate(i + 1)}>{i + 1}</button>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            </div>
           )}
+
+          {/* Modales */}
+          <ModalEditarUsuario
+            show={showEditModal}
+            onHide={() => setShowEditModal(false)}
+            onSubmit={handleEditSubmit}
+            formData={formData}
+            formErrors={formErrors}
+            handleInputChange={handleInputChange}
+            permisos={permisos} // <-- PASA LOS PERMISOS AQUÍ
+          />
+          <ModalCrearUsuario
+            show={showCreateModal}
+            onHide={() => setShowCreateModal(false)}
+            onSubmit={handleCreateSubmit}
+            formData={formData}
+            formErrors={formErrors}
+            handleInputChange={handleInputChange}
+            permisos={permisos} // <-- PASA LOS PERMISOS AQUÍ
+          />
+          <ModalEliminarUsuario
+            show={showDeleteModal}
+            onHide={() => setShowDeleteModal(false)}
+            onConfirm={handleDeleteConfirm}
+            userToDelete={userToDelete}
+          />
         </Container>
       </div>
-
-      {/* Modal de edición */}
-      <Modal show={showEditModal} onHide={() => setShowEditModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Editar Usuario</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form onSubmit={handleSubmit}>
-            {['Nombre', 'Apellido', 'Tipo_Doc', 'Doc_identificacion', 'Telefono', 'Correo', 'Permiso'].map(field => (
-              <Form.Group className="mb-3" key={field}>
-                <Form.Label>{field.replace('_', ' ')}</Form.Label>
-                <Form.Control
-                  type={field === 'Correo' ? 'email' : 'text'}
-                  name={field}
-                  value={formData[field]}
-                  onChange={handleInputChange}
-                  isInvalid={!!formErrors[field]}
-                />
-                <Form.Control.Feedback type="invalid">
-                  {formErrors[field]}
-                </Form.Control.Feedback>
-              </Form.Group>
-            ))}
-            <Form.Group className="mb-3">
-              <Form.Label>Clave</Form.Label>
-              <Form.Control
-                type="password"
-                name="Clave"
-                value={formData.Clave}
-                onChange={handleInputChange}
-                isInvalid={!!formErrors.Clave}
-              />
-              <Form.Control.Feedback type="invalid">
-                {formErrors.Clave}
-              </Form.Control.Feedback>
-            </Form.Group>
-            <Button variant="primary" type="submit">
-              Guardar Cambios
-            </Button>
-          </Form>
-        </Modal.Body>
-      </Modal>
-
-      {/* Modal de creación de usuario */}
-      <Modal show={showCreateModal} onHide={() => setShowCreateModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Crear Usuario</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form onSubmit={handleSubmit}>
-            {['Nombre', 'Apellido', 'Tipo_Doc', 'Doc_identificacion', 'Telefono', 'Correo', 'Permiso'].map(field => (
-              <Form.Group className="mb-3" key={field}>
-                <Form.Label>{field.replace('_', ' ')}</Form.Label>
-                <Form.Control
-                  type={field === 'Correo' ? 'email' : 'text'}
-                  name={field}
-                  value={formData[field]}
-                  onChange={handleInputChange}
-                  isInvalid={!!formErrors[field]}
-                />
-                <Form.Control.Feedback type="invalid">
-                  {formErrors[field]}
-                </Form.Control.Feedback>
-              </Form.Group>
-            ))}
-            <Form.Group className="mb-3">
-              <Form.Label>Clave</Form.Label>
-              <Form.Control
-                type="password"
-                name="Clave"
-                value={formData.Clave}
-                onChange={handleInputChange}
-                isInvalid={!!formErrors.Clave}
-              />
-              <Form.Control.Feedback type="invalid">
-                {formErrors.Clave}
-              </Form.Control.Feedback>
-            </Form.Group>
-            <Button variant="primary" type="submit">
-              Crear Usuario
-            </Button>
-          </Form>
-        </Modal.Body>
-      </Modal>
-
-      {/* Modal de eliminación */}
-      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Confirmar Eliminación</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          ¿Estás seguro de que deseas eliminar al usuario <strong>{userToDelete?.Nombre} {userToDelete?.Apellido}</strong>?
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
-            Cancelar
-          </Button>
-          <Button variant="danger" onClick={confirmDelete}>
-            Eliminar
-          </Button>
-        </Modal.Footer>
-      </Modal>
     </div>
   );
 };

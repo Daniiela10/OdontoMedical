@@ -1,8 +1,10 @@
 import express from 'express';
 import {
   crearHistorial,
-  obtenerHistoriales,
+  agregarControl,
+  obtenerHistorialPorPaciente,
   obtenerHistorialPorId,
+  obtenerHistoriales,
   actualizarHistorial,
   eliminarHistorial
 } from '../controller/controlOdoHistoriales.js';
@@ -73,7 +75,7 @@ const router = express.Router();
  *         archivoAdjunto: "uploads/archivo.pdf"
  */
 
-// Crear historial
+// Crear historial clínico (único por paciente)
 /**
  * @swagger
  * /historiales:
@@ -92,22 +94,31 @@ const router = express.Router();
  *       400:
  *         description: Error de validación
  */
-router.post('/historiales', verifyJWT, verifyRole(['ADMIN', 'JEFE']), historialClinicoValidator, crearHistorial);
+router.post('/historiales', verifyJWT, verifyRole(['ADMIN', 'DOCTORA']), crearHistorial);
 
-// Obtener todos
+// Agregar control a un historial existente
+router.post('/historiales/:id/agregar-control', verifyJWT, verifyRole(['ADMIN', 'DOCTORA']), agregarControl);
+
+// Obtener historial por paciente
 /**
  * @swagger
- * /historiales:
+ * /historiales/paciente/{idPaciente}:
  *   get:
- *     summary: Obtener todos los historiales clínicos
+ *     summary: Obtener todos los historiales clínicos de un paciente
  *     tags: [Historiales]
+ *     parameters:
+ *       - in: path
+ *         name: idPaciente
+ *         required: true
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
- *         description: Lista de historiales
+ *         description: Lista de historiales del paciente
  */
-router.get('/historiales', verifyJWT, verifyRole(['ADMIN', 'JEFE', 'RECEPCIONISTA']), obtenerHistoriales);
+router.get('/historiales/paciente/:idPaciente', verifyJWT, verifyRole(['ADMIN', 'DOCTORA', 'RECEPCIONISTA', 'PACIENTE']), obtenerHistorialPorPaciente);
 
-// Obtener por ID
+// Obtener historial por ID
 /**
  * @swagger
  * /historiales/{id}:
@@ -126,7 +137,20 @@ router.get('/historiales', verifyJWT, verifyRole(['ADMIN', 'JEFE', 'RECEPCIONIST
  *       404:
  *         description: No se encontró el historial
  */
-router.get('/historiales/:id', verifyJWT, verifyRole(['ADMIN', 'JEFE', 'RECEPCIONISTA', 'PACIENTE']), obtenerHistorialPorId);
+router.get('/historiales/:id', verifyJWT, verifyRole(['ADMIN', 'DOCTORA', 'RECEPCIONISTA', 'PACIENTE']), obtenerHistorialPorId);
+
+// Listar todos los historiales
+/**
+ * @swagger
+ * /historiales:
+ *   get:
+ *     summary: Obtener todos los historiales clínicos
+ *     tags: [Historiales]
+ *     responses:
+ *       200:
+ *         description: Lista de historiales
+ */
+router.get('/historiales', verifyJWT, verifyRole(['ADMIN', 'DOCTORA', 'RECEPCIONISTA', 'PACIENTE']), obtenerHistoriales);
 
 // Actualizar historial
 /**
@@ -154,7 +178,7 @@ router.get('/historiales/:id', verifyJWT, verifyRole(['ADMIN', 'JEFE', 'RECEPCIO
  *       404:
  *         description: No se encontró el historial
  */
-router.patch('/historiales/:id', verifyJWT, verifyRole(['ADMIN', 'JEFE']), historialClinicoValidator, actualizarHistorial);
+router.patch('/historiales/:id', verifyJWT, verifyRole(['ADMIN', 'DOCTORA']), historialClinicoValidator, actualizarHistorial);
 
 // Eliminar historial
 /**

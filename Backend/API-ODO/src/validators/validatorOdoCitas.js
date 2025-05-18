@@ -67,33 +67,40 @@ const fecha = Joi.date()
   .custom((value, helpers) => {
     const dayOfWeek = moment(value).day();
     const hora = helpers.state.ancestors[0].hora;
-
-    // Restricción para ortodoncia
-    if (helpers.state.ancestors[0].servicio === "ortodoncia") {
+    const servicio = helpers.state.ancestors[0].servicio || helpers.state.ancestors[0].servicios;
+    // Si el servicio es ortodoncia (puedes ajustar el ID o nombre según tu modelo)
+    if (servicio && (servicio === 'ortodoncia' || servicio.Nombre === 'Ortodoncia')) {
       if (dayOfWeek !== 4) {
-        return helpers.message("Las citas para ortodoncia solo están disponibles los jueves.");
+        return helpers.message('Las citas para ortodoncia solo están disponibles los jueves.');
       }
-      if (hora < "14:00" || hora > "19:00") {
-        return helpers.message("El horario para ortodoncia es de 2 PM a 7 PM.");
+      // Horario permitido: 13:00 a 19:00, intervalos de 20 minutos
+      const minutosValidos = ['00', '20', '40'];
+      const [horaStr, minStr] = hora.split(':');
+      const horaNum = parseInt(horaStr, 10);
+      if (horaNum < 13 || horaNum > 19 || (horaNum === 19 && minStr !== '00')) {
+        return helpers.message('El horario para ortodoncia es de 1 PM a 7 PM.');
+      }
+      if (!minutosValidos.includes(minStr)) {
+        return helpers.message('Las citas de ortodoncia deben ser en intervalos de 20 minutos (00, 20, 40).');
       }
     } else {
       // Restricción para otros servicios
-      if (hora < "11:00" || hora > "19:00") {
-        return helpers.message("El horario para otros servicios es de 11 AM a 7 PM.");
+      if (hora < '11:00' || hora > '19:00') {
+        return helpers.message('El horario para otros servicios es de 11 AM a 7 PM.');
       }
     }
     return value;
   })
   .messages({
-    "any.required": "El campo fecha es requerido.",
+    'any.required': 'El campo fecha es requerido.',
   });
 
 const hora = Joi.string()
   .pattern(/^([01]\d|2[0-3]):([0-5]\d)$/)
   .required()
   .messages({
-    "any.required": "El campo hora es requerido.",
-    "string.pattern.base": "El campo hora debe estar en formato HH:mm (24 horas).",
+    'any.required': 'El campo hora es requerido.',
+    'string.pattern.base': 'El campo hora debe estar en formato HH:mm (24 horas).',
   });
 
 // Esquemas para las operaciones

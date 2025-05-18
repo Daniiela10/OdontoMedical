@@ -32,6 +32,8 @@ const modelOdoUsers = express.Router();
  *         - Correo
  *         - Clave
  *         - Permiso
+ *         - Genero
+ *         - Edad
  *       properties:
  *         Nombre:
  *           type: string
@@ -43,12 +45,19 @@ const modelOdoUsers = express.Router();
  *           type: string
  *           description: Tipo de documento del usuario.
  *           enum:
- *             - T.I
- *             - C.C
+ *             - RC
+ *             - TI
+ *             - CC
+ *             - TE
+ *             - CE
+ *             - NIT
+ *             - PP
+ *             - PEP
+ *             - DIE
  *             - PA
- *           example: T.I
+ *           example: CC
  *         Doc_identificacion:
- *           type: number
+ *           type: string
  *           description: Número de identificación del usuario.
  *         Telefono:
  *           type: number
@@ -65,15 +74,29 @@ const modelOdoUsers = express.Router();
  *           type: string
  *           description: ID de permiso asociado al usuario.
  *           example: "64fbc1234567890abcdef123"
+ *         Genero:
+ *           type: string
+ *           description: Género del usuario.
+ *           enum:
+ *             - Masculino
+ *             - Femenino
+ *             - Otro
+ *           example: Masculino
+ *         Edad:
+ *           type: number
+ *           description: Edad del usuario (0 a 120).
+ *           example: 25
  *       example:
  *         Nombre: "Juan"
  *         Apellido: "Pérez"
- *         Tipo_Doc: "C.C"
- *         Doc_identificacion: 123456789
+ *         Tipo_Doc: "CC"
+ *         Doc_identificacion: "123456789"
  *         Telefono: 3001234567
  *         Correo: "juan.perez@example.com"
  *         Clave: "secreta123"
  *         Permiso: "64fbc1234567890abcdef123"
+ *         Genero: "Masculino"
+ *         Edad: 30
  */
 
 /**
@@ -115,7 +138,7 @@ modelOdoUsers.post("/users", allowPublic, crearusuario);
  *               items:
  *                 $ref: '#/components/schemas/User'
  */
-modelOdoUsers.get("/users", verifyJWT, verifyRole(['ADMIN', 'JEFE', 'RECEPCIONISTA']), llamarUsuarios);
+modelOdoUsers.get("/users", verifyJWT, verifyRole(['ADMIN', 'DOCTORA', 'RECEPCIONISTA']), llamarUsuarios);
 
 /**
  * @swagger
@@ -141,7 +164,7 @@ modelOdoUsers.get("/users", verifyJWT, verifyRole(['ADMIN', 'JEFE', 'RECEPCIONIS
  *       404:
  *         description: Usuario no encontrado
  */
-modelOdoUsers.get("/users/:_id",verifyJWT,verifyRole(['ADMIN', 'JEFE', 'RECEPCIONISTA', 'PACIENTE']), llamarUsuId);
+modelOdoUsers.get("/users/:_id",verifyJWT,verifyRole(['ADMIN', 'DOCTORA', 'RECEPCIONISTA', 'PACIENTE']), llamarUsuId);
 
 /**
  * @swagger
@@ -171,7 +194,7 @@ modelOdoUsers.get("/users/:_id",verifyJWT,verifyRole(['ADMIN', 'JEFE', 'RECEPCIO
  *       404:
  *         description: Usuario no encontrado
  */
-modelOdoUsers.patch("/users/:_id",verifyJWT,verifyRole(['ADMIN', 'JEFE', 'PACIENTE']), ActualizarUsu);
+modelOdoUsers.patch("/users/:_id",verifyJWT,verifyRole(['ADMIN', 'DOCTORA', 'PACIENTE']), ActualizarUsu);
 
 /**
  * @swagger
@@ -193,6 +216,6 @@ modelOdoUsers.patch("/users/:_id",verifyJWT,verifyRole(['ADMIN', 'JEFE', 'PACIEN
  *       404:
  *         description: Usuario no encontrado
  */
-modelOdoUsers.delete("/users/:_id", verifyJWT, verifyRole(['ADMIN', 'JEFE']), borrarUsu);
+modelOdoUsers.delete("/users/:_id", verifyJWT, verifyRole(['ADMIN', 'DOCTORA']), borrarUsu);
 
 export default modelOdoUsers;

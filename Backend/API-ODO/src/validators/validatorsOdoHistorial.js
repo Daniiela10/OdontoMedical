@@ -2,12 +2,13 @@ import { body } from 'express-validator';
 
 export const historialClinicoValidator = [
   body('paciente').notEmpty().withMessage('El paciente es obligatorio'),
-  body('cita').notEmpty().withMessage('La cita es obligatoria'),
-  body('servicio').notEmpty().withMessage('El servicio es obligatorio'),
-  body('doctora').notEmpty().withMessage('La doctora es obligatoria'),
-  body('consultorio').notEmpty().withMessage('El consultorio es obligatorio'),
-  body('descripcionTratamiento')
-    .notEmpty().withMessage('La descripción del tratamiento es obligatoria')
-    .isLength({ max: 1000 }).withMessage('La descripción no debe superar los 1000 caracteres'),
-  body('fechaAtencion').notEmpty().withMessage('La fecha de atención es obligatoria')
+  body('responsable_creacion').notEmpty().withMessage('El odontólogo responsable es obligatorio'),
+];
+
+export const controlHistorialValidator = [
+  body('fecha_control').notEmpty().withMessage('La fecha del control es obligatoria'),
+  body('motivo_consulta').notEmpty().withMessage('El motivo de consulta es obligatorio'),
+  body('diagnostico').notEmpty().withMessage('El diagnóstico es obligatorio'),
+  body('procedimiento_realizado').notEmpty().withMessage('El procedimiento realizado es obligatorio'),
+  body('odontologo_responsable').notEmpty().withMessage('El odontólogo responsable es obligatorio'),
 ];

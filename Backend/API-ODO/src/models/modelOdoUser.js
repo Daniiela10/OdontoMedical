@@ -13,8 +13,19 @@ const usuarioSchema = mongoose.Schema({
     type: String, 
     required: [true, 'El tipo de documento es obligatorio'], 
     enum: {
-      values: ['T.I', 'C.C', 'PA'], 
-      message: 'El tipo de documento debe ser uno de los siguientes valores: T.I, C.C, PA', 
+      values: [
+        'RC', // Registro Civil de Nacimiento
+        'TI', // Tarjeta de Identidad
+        'CC', // Cédula de Ciudadanía
+        'TE', // Tarjeta de Extranjería
+        'CE', // Cédula de Extranjería
+        'NIT', // Número de Identificación Tributaria
+        'PP', // Pasaporte
+        'PEP', // Permiso Especial de Permanencia
+        'DIE', // Documento de Identificación Extranjero
+        'PA' // (Si quieres mantenerlo por compatibilidad)
+      ], 
+      message: 'El tipo de documento debe ser uno de los siguientes valores: RC, TI, CC, TE, CE, NIT, PP, PEP, DIE, PA', 
     },
   },
   Doc_identificacion: {
@@ -44,7 +55,21 @@ const usuarioSchema = mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Permiso",
     required: true,
-  }  
+  },
+  Genero: {
+    type: String,
+    required: [true, 'El género es obligatorio'],
+    enum: {
+      values: ['Masculino', 'Femenino', 'Otro'],
+      message: 'El género debe ser Masculino, Femenino u Otro',
+    },
+  },
+  Edad: {
+    type: Number,
+    required: [true, 'La edad es obligatoria'],
+    min: [0, 'La edad no puede ser negativa'],
+    max: [120, 'La edad no puede ser mayor a 120'],
+  }
 }, {
   timestamps: true, 
 });

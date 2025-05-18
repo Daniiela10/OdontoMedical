@@ -46,7 +46,7 @@ const NavBar = () => {
           Perfil
         </Link>
         <Link
-          to="/agendar-citas"
+          to="/agendar-cita"
           style={{
             color: "#fff",
             fontWeight: 700,
@@ -58,6 +58,20 @@ const NavBar = () => {
           }}
         >
           Agendar Cita
+        </Link>
+        <Link
+          to="/mis-citas"
+          style={{
+            color: "#fff",
+            fontWeight: 700,
+            textDecoration: "none",
+            marginRight: 28,
+            fontSize: 17,
+            letterSpacing: 0.5,
+            transition: "color 0.2s",
+          }}
+        >
+          Mis Citas
         </Link>
         <Link
           to="/ver-mi-historia"

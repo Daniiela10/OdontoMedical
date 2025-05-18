@@ -8,7 +8,7 @@ import Odo3 from '../assets/img/Odo_3.jpg';
 import Login from '../components/Login';
 import Register from '../components/Register';
 import Footer from '../components/Footer';
-import PublicNavBar from '../components/NavBarPublico'; 
+import PublicNavBar from '../components/NavBar/NavBarPublico'; 
 
 const images = [Odo1, Odo2, Odo3];
 

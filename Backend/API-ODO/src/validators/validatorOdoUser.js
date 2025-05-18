@@ -36,23 +36,27 @@ const Apellido = Joi.string()
     "any.required": "El apellido es un campo requerido.",
   });
 
+// Tipos de documento permitidos según el modelo
 const Tipo_Doc = Joi.string()
-  .valid("T.I", "C.C", "PA")
+  .valid(
+    "RC", "TI", "CC", "TE", "CE", "NIT", "PP", "PEP", "DIE", "PA"
+  )
   .required()
   .messages({
     "string.base": "El tipo de documento debe ser un texto.",
-    "any.only": "El tipo de documento debe ser uno de los siguientes valores: T.I, C.C, PA.",
+    "any.only": "El tipo de documento debe ser uno de los siguientes valores: RC, TI, CC, TE, CE, NIT, PP, PEP, DIE, PA.",
     "any.required": "El tipo de documento es un campo requerido.",
   });
 
-const Doc_identificacion = Joi.number()
-  .min(10000000)
-  .max(99999999999999999999)
+const Doc_identificacion = Joi.string()
+  .min(5)
+  .max(20)
   .required()
   .messages({
-    "number.base": "La identificación debe ser un número.",
-    "number.min": "La identificación debe tener al menos 8 dígitos.",
-    "number.max": "La identificación no puede exceder los 20 dígitos.",
+    "string.base": "La identificación debe ser un texto.",
+    "string.empty": "La identificación no puede estar vacía.",
+    "string.min": "La identificación debe tener al menos 5 caracteres.",
+    "string.max": "La identificación no puede exceder los 20 caracteres.",
     "any.required": "La identificación es un campo requerido.",
   });
 
@@ -78,15 +82,13 @@ const Correo = Joi.string()
   });
 
 const Clave = Joi.string()
-  .alphanum()
   .min(8)
-  .max(16)
+  .max(32)
   .required()
   .messages({
     "string.base": "La clave debe ser un texto.",
-    "string.alphanum": "La clave debe contener solo letras y números.",
     "string.min": "La clave debe tener al menos 8 caracteres.",
-    "string.max": "La clave no puede exceder los 16 caracteres.",
+    "string.max": "La clave no puede exceder los 32 caracteres.",
     "any.required": "La clave es un campo requerido.",
   });
 
@@ -101,6 +103,28 @@ const Permiso = Joi.string()
     "any.required": "El campo Id_permiso es requerido.",
   });
 
+const Genero = Joi.string()
+  .valid("Masculino", "Femenino", "Otro")
+  .required()
+  .messages({
+    "string.base": "El género debe ser un texto.",
+    "any.only": "El género debe ser Masculino, Femenino u Otro.",
+    "any.required": "El género es un campo requerido.",
+  });
+
+const Edad = Joi.number()
+  .integer()
+  .min(0)
+  .max(120)
+  .required()
+  .messages({
+    "number.base": "La edad debe ser un número.",
+    "number.integer": "La edad debe ser un número entero.",
+    "number.min": "La edad no puede ser negativa.",
+    "number.max": "La edad no puede ser mayor a 120.",
+    "any.required": "La edad es un campo requerido.",
+  });
+
 // Esquemas
 const createUserSchema = Joi.object({
   Nombre: Nombre.required(),
@@ -111,6 +135,8 @@ const createUserSchema = Joi.object({
   Correo: Correo.required(),
   Clave: Clave.required(),
   Permiso: Permiso.required(),
+  Genero: Genero.required(),
+  Edad: Edad.required(),
 });
 
 const updateUserSchema = Joi.object({
@@ -122,6 +148,8 @@ const updateUserSchema = Joi.object({
   Correo: Correo.optional(),
   Clave: Clave.optional(),
   Permiso: Permiso.optional(),
+  Genero: Genero.optional(),
+  Edad: Edad.optional(),
 });
 
 const getUserSchema = Joi.object({

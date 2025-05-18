@@ -69,7 +69,7 @@ modelOdoPermisos.post("/permisos", verifyJWT, verifyRole(['ADMIN']), createPermi
  *               items:
  *                 $ref: '#/components/schemas/Permiso'
  */
-modelOdoPermisos.get("/permisos", verifyJWT, verifyRole(['ADMIN', 'JEFE']), getPermisos);
+modelOdoPermisos.get("/permisos", verifyJWT, verifyRole(['ADMIN', 'DOCTORA']), getPermisos);
 
 /**
  * @swagger
@@ -95,7 +95,7 @@ modelOdoPermisos.get("/permisos", verifyJWT, verifyRole(['ADMIN', 'JEFE']), getP
  *       404:
  *         description: Permiso no encontrado
  */
-modelOdoPermisos.get("/permisos/:_id", verifyJWT, verifyRole(['ADMIN', 'JEFE']), getPermisoById);
+modelOdoPermisos.get("/permisos/:_id", verifyJWT, verifyRole(['ADMIN', 'DOCTORA']), getPermisoById);
 
 /**
  * @swagger

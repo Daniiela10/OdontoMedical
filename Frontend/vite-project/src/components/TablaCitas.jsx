@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useContext } from 'react';
 import api from '../API/axiosInstance'; // Usa la instancia de Axios personalizada
 import { Link, useLocation } from 'react-router-dom';
-import { FaUserCog, FaKey, FaEdit, FaTrash, FaCogs, FaCalendarAlt, FaFileMedical, FaClinicMedical, FaUserMd, FaTimes } from 'react-icons/fa';
+import { FaUserCog, FaKey, FaEdit, FaTrash, FaCogs, FaCalendarAlt, FaFileMedical, FaClinicMedical, FaUserMd, FaTimes, FaCheckCircle } from 'react-icons/fa';
 import { Button, Table, Modal, Form, Nav } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { AuthContext } from '../contexts/AuthContext';
 import { tienePermiso } from '../utils/roles'; // <-- Importa la función de permisos
+import NavBarCrud from './NavBar/NavBarCrud';
+import { ModalEditarCita, ModalEliminarCita } from './Modales/ModalCita';
+import '../styles/globalTableStyles.css';
 
 const API_URL = '/citas'; // Ya no necesitas el host, la instancia lo tiene
 
@@ -17,7 +20,7 @@ const TablaCitas = () => {
     // Determina el rol mínimo requerido según la ruta
     let rutaRol = "";
     if (location.pathname.startsWith('/admin')) rutaRol = "ADMIN";
-    else if (location.pathname.startsWith('/jefe')) rutaRol = "JEFE";
+    else if (location.pathname.startsWith('/doctora')) rutaRol = "DOCTORA";
     else if (location.pathname.startsWith('/recepcionista')) rutaRol = "RECEPCIONISTA";
 
     // Obtiene el rol real del usuario
@@ -53,10 +56,14 @@ const TablaCitas = () => {
         hora: '',
     });
     const [currentPage, setCurrentPage] = useState(1);
-    const citasPerPage = 10;
+    const itemsPerPage = 10;
     const [showEditModal, setShowEditModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [citaToDelete, setCitaToDelete] = useState(null);
+
+    const [servicios, setServicios] = useState([]);
+    const [doctoras, setDoctoras] = useState([]);
+    const [consultorios, setConsultorios] = useState([]);
 
     const colorScheme = {
         primary: '#2c3e50',
@@ -74,6 +81,9 @@ const TablaCitas = () => {
 
         window.addEventListener('resize', handleResize);
         fetchCitas();
+        fetchServicios();
+        fetchDoctoras();
+        fetchConsultorios();
         return () => window.removeEventListener('resize', handleResize);
     }, [location.pathname]);
 
@@ -87,6 +97,33 @@ const TablaCitas = () => {
             setError('Error al cargar las citas');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchServicios = async () => {
+        try {
+            const response = await api.get('/servicio');
+            setServicios(response.data);
+        } catch (error) {
+            // No crítico para la vista de citas
+        }
+    };
+
+    const fetchDoctoras = async () => {
+        try {
+            const response = await api.get('/doctora');
+            setDoctoras(response.data);
+        } catch (error) {
+            // No crítico para la vista de citas
+        }
+    };
+
+    const fetchConsultorios = async () => {
+        try {
+            const response = await api.get('/consultorios');
+            setConsultorios(response.data);
+        } catch (error) {
+            // No crítico para la vista de citas
         }
     };
 
@@ -150,10 +187,10 @@ const TablaCitas = () => {
         cita.apellidoCliente?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const indexOfLastCita = currentPage * citasPerPage;
-    const indexOfFirstCita = indexOfLastCita - citasPerPage;
-    const currentCitas = filteredCitas.slice(indexOfFirstCita, indexOfLastCita);
-
+    const indexOfLast = currentPage * itemsPerPage;
+    const indexOfFirst = indexOfLast - itemsPerPage;
+    const currentItems = filteredCitas.slice(indexOfFirst, indexOfLast);
+    const totalPages = Math.ceil(filteredCitas.length / itemsPerPage);
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
     // Configuración de vistas permitidas por rol
@@ -167,7 +204,7 @@ const TablaCitas = () => {
             { key: 'consultorios', label: 'Consultorios', icon: <FaClinicMedical className="me-2" /> },
             { key: 'doctores', label: 'Doctores', icon: <FaUserMd className="me-2" /> },
         ],
-        JEFE: [
+        DOCTORA: [
             { key: 'usuarios', label: 'Usuarios', icon: <FaUserCog className="me-2" /> },
             { key: 'permisos', label: 'Permisos', icon: <FaKey className="me-2" /> },
             { key: 'servicios', label: 'Servicios', icon: <FaCogs className="me-2" /> },
@@ -185,7 +222,7 @@ const TablaCitas = () => {
     // Función para obtener el prefijo de ruta según el rol
     const getBasePath = (rol) => {
         if (rol === "ADMIN") return "/admin";
-        if (rol === "JEFE") return "/jefe";
+        if (rol === "DOCTORA") return "/doctora";
         if (rol === "RECEPCIONISTA") return "/recepcionista";
         return "/";
     };
@@ -198,68 +235,22 @@ const TablaCitas = () => {
         path: `${basePath}/${item.key}`
     }));
 
+    const confirmarAsistencia = async (citaId) => {
+        try {
+            await api.patch(`/citas/${citaId}/confirmar`);
+            fetchCitas();
+        } catch (error) {
+            setError('Error al confirmar la asistencia');
+        }
+    };
+
     if (loading) return <div>Cargando citas...</div>;
     if (error) return <div>{error}</div>;
 
     return (
         <div className="d-flex" style={{ minHeight: '100vh', backgroundColor: colorScheme.light }}>
-            {/* Sidebar */}
-            <div
-                className={`d-flex flex-column ${isMobile ? 'position-fixed' : ''}`}
-                style={{
-                    width: isMobile ? '75%' : '250px',
-                    height: '100vh',
-                    zIndex: 1000,
-                    transform: isMobile && !sidebarOpen ? 'translateX(-100%)' : 'translateX(0)',
-                    transition: 'transform 0.3s ease',
-                    backgroundColor: colorScheme.primary,
-                    color: colorScheme.light,
-                }}
-            >
-                <div className="p-3 d-flex justify-content-between align-items-center border-bottom" style={{ borderColor: colorScheme.secondary }}>
-                    <div className="d-flex align-items-center">
-                        <Link
-                            to="/admin"
-                            className="text-light text-decoration-none d-flex align-items-center"
-                            onClick={() => isMobile && setSidebarOpen(false)}
-                        >
-                            <FaUserCog className="me-2" size={24} />
-                            <h5 className="mb-0">Panel de Control</h5>
-                        </Link>
-                    </div>
-                    {isMobile && (
-                        <Button
-                            variant="link"
-                            className="p-0 text-light"
-                            onClick={() => setSidebarOpen(false)}
-                        >
-                            <FaTimes size={20} />
-                        </Button>
-                    )}
-                </div>
-
-                <Nav variant="pills" className="flex-column p-3">
-                    {menuItems.map((item) => (
-                        <Nav.Item key={item.path} className="mb-2">
-                            <Nav.Link
-                                as={Link}
-                                to={item.path}
-                                className="text-white d-flex align-items-center"
-                                style={{
-                                    backgroundColor: 'transparent',
-                                    borderRadius: '4px',
-                                    border: 'none',
-                                }}
-                                onClick={() => isMobile && setSidebarOpen(false)}
-                            >
-                                {item.icon}
-                                {item.label}
-                            </Nav.Link>
-                        </Nav.Item>
-                    ))}
-                </Nav>
-            </div>
-
+            {/* Sidebar NavBarCrud */}
+            <NavBarCrud colorScheme={colorScheme} userRol={userRol} />
             {/* Main Content */}
             <div className="flex-grow-1 p-4">
                 <h1 className="text-center mb-4">Gestión de Citas</h1>
@@ -294,7 +285,7 @@ const TablaCitas = () => {
                     )}
                 </div>
                 <div className="table-responsive shadow-sm rounded">
-                    <Table striped hover className="mb-0">
+                    <Table responsive striped hover className="mb-0">
                         <thead style={{ backgroundColor: colorScheme.primary, color: colorScheme.light }}>
                             <tr>
                                 <th>Documento</th>
@@ -309,14 +300,23 @@ const TablaCitas = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {currentCitas.map((cita) => (
+                            {currentItems.map((cita) => (
                                 <tr key={cita._id}>
                                     <td>{cita.documentoCliente}</td>
                                     <td>{cita.nombreCliente}</td>
                                     <td>{cita.apellidoCliente}</td>
-                                    <td>{cita.servicios?.nombre || 'Sin asignar'}</td>
-                                    <td>{cita.doctora?.nombre || 'Sin asignar'}</td>
-                                    <td>{cita.consultorio?.nombre || 'Sin asignar'}</td>
+                                    <td>{
+                                        servicios.find(s => s._id === (cita.servicios?._id || cita.servicios))?.Nombre || 'Sin asignar'
+                                    }</td>
+                                    <td>{
+                                        (() => {
+                                            const doc = doctoras.find(d => d._id === (cita.doctora?._id || cita.doctora));
+                                            return doc ? `${doc.Nombres} ${doc.Apellidos}` : 'Sin asignar';
+                                        })()
+                                    }</td>
+                                    <td>{
+                                        consultorios.find(c => c._id === (cita.consultorio?._id || cita.consultorio))?.Nombre_consultorio || 'Sin asignar'
+                                    }</td>
                                     <td>{cita.fecha ? cita.fecha.split('T')[0] : 'N/A'}</td>
                                     <td>{cita.hora || 'N/A'}</td>
                                     <td>
@@ -339,6 +339,17 @@ const TablaCitas = () => {
                                                 <FaTrash />
                                             </Button>
                                         )}
+                                        {((userRol === 'DOCTORA' || userRol === 'ADMIN') && cita.estado !== 'Terminado') && (
+                                            <Button
+                                                variant="outline-success"
+                                                size="sm"
+                                                className="ms-2"
+                                                title="Confirmar asistencia"
+                                                onClick={() => confirmarAsistencia(cita._id)}
+                                            >
+                                                <FaCheckCircle />
+                                            </Button>
+                                        )}
                                     </td>
                                 </tr>
                             ))}
@@ -347,128 +358,35 @@ const TablaCitas = () => {
                 </div>
                 <nav>
                     <ul className="pagination">
-                        {Array.from({ length: Math.ceil(filteredCitas.length / citasPerPage) }, (_, index) => (
-                            <li key={index} className={`page-item ${currentPage === index + 1 ? 'active' : ''}`}>
-                                <button className="page-link" onClick={() => paginate(index + 1)}>
-                                    {index + 1}
-                                </button>
+                        {Array.from({ length: totalPages }, (_, i) => (
+                            <li key={i} className={`page-item ${currentPage === i + 1 ? 'active' : ''}`}>
+                                <button className="page-link" onClick={() => paginate(i + 1)}>{i + 1}</button>
                             </li>
                         ))}
                     </ul>
                 </nav>
+
+                {/* Modal de edición/creación */}
+                <ModalEditarCita
+                  show={showEditModal}
+                  onHide={() => setShowEditModal(false)}
+                  onSubmit={handleSubmit}
+                  formData={formData}
+                  handleInputChange={handleInputChange}
+                  editingCita={editingCita}
+                  servicios={servicios}
+                  doctoras={doctoras}
+                  consultorios={consultorios}
+                />
+
+                {/* Modal de eliminación */}
+                <ModalEliminarCita
+                  show={showDeleteModal}
+                  onHide={() => setShowDeleteModal(false)}
+                  onConfirm={confirmDelete}
+                  citaToDelete={citaToDelete}
+                />
             </div>
-
-            {/* Modal de edición/creación */}
-            <Modal show={showEditModal} onHide={() => setShowEditModal(false)}>
-                <Modal.Header closeButton>
-                    <Modal.Title>{editingCita ? 'Editar Cita' : 'Crear Cita'}</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <Form onSubmit={handleSubmit}>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Documento Cliente</Form.Label>
-                            <Form.Control
-                                type="text"
-                                name="documentoCliente"
-                                value={formData.documentoCliente}
-                                onChange={handleInputChange}
-                                required
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Nombre Cliente</Form.Label>
-                            <Form.Control
-                                type="text"
-                                name="nombreCliente"
-                                value={formData.nombreCliente}
-                                onChange={handleInputChange}
-                                required
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Apellido Cliente</Form.Label>
-                            <Form.Control
-                                type="text"
-                                name="apellidoCliente"
-                                value={formData.apellidoCliente}
-                                onChange={handleInputChange}
-                                required
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Servicio</Form.Label>
-                            <Form.Control
-                                type="text"
-                                name="servicios"
-                                value={formData.servicios}
-                                onChange={handleInputChange}
-                                required
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Doctora</Form.Label>
-                            <Form.Control
-                                type="text"
-                                name="doctora"
-                                value={formData.doctora}
-                                onChange={handleInputChange}
-                                required
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Consultorio</Form.Label>
-                            <Form.Control
-                                type="text"
-                                name="consultorio"
-                                value={formData.consultorio}
-                                onChange={handleInputChange}
-                                required
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Fecha</Form.Label>
-                            <Form.Control
-                                type="date"
-                                name="fecha"
-                                value={formData.fecha}
-                                onChange={handleInputChange}
-                                required
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Hora</Form.Label>
-                            <Form.Control
-                                type="time"
-                                name="hora"
-                                value={formData.hora}
-                                onChange={handleInputChange}
-                                required
-                            />
-                        </Form.Group>
-                        <Button variant="primary" type="submit">
-                            Guardar
-                        </Button>
-                    </Form>
-                </Modal.Body>
-            </Modal>
-
-            {/* Modal de eliminación */}
-            <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
-                <Modal.Header closeButton>
-                    <Modal.Title>Confirmar Eliminación</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    ¿Estás seguro de que deseas eliminar la cita de <strong>{citaToDelete?.nombreCliente}</strong>?
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
-                        Cancelar
-                    </Button>
-                    <Button variant="danger" onClick={confirmDelete}>
-                        Eliminar
-                    </Button>
-                </Modal.Footer>
-            </Modal>
         </div>
     );
 };

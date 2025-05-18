@@ -6,6 +6,9 @@ import { FaUserCog, FaKey, FaEdit, FaTrash, FaCogs, FaCalendarAlt, FaFileMedical
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { AuthContext } from '../contexts/AuthContext';
 import { tienePermiso } from '../utils/roles'; // <-- Importa la función de permisos
+import NavBarCrud from './NavBar/NavBarCrud';
+import { ModalEditarConsultorio, ModalEliminarConsultorio } from './Modales/ModalConsultorio';
+import '../styles/globalTableStyles.css';
 
 const API_URL = '/consultorios'; // Solo la ruta, la instancia ya tiene el baseURL
 
@@ -17,7 +20,7 @@ const TablaConsultorios = () => {
     // Determina el rol mínimo requerido según la ruta
     let rutaRol = "";
     if (location.pathname.startsWith('/admin')) rutaRol = "ADMIN";
-    else if (location.pathname.startsWith('/jefe')) rutaRol = "JEFE";
+    else if (location.pathname.startsWith('/doctora')) rutaRol = "DOCTORA";
     else if (location.pathname.startsWith('/recepcionista')) rutaRol = "RECEPCIONISTA";
 
     // Obtiene el rol real del usuario
@@ -45,7 +48,7 @@ const TablaConsultorios = () => {
         Nombre_consultorio: '',
     });
     const [currentPage, setCurrentPage] = useState(1);
-    const consultoriosPerPage = 10;
+    const itemsPerPage = 10;
     const [showEditModal, setShowEditModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [consultorioToDelete, setConsultorioToDelete] = useState(null);
@@ -133,10 +136,10 @@ const TablaConsultorios = () => {
         consultorio.Nombre_consultorio?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const indexOfLastConsultorio = currentPage * consultoriosPerPage;
-    const indexOfFirstConsultorio = indexOfLastConsultorio - consultoriosPerPage;
-    const currentConsultorios = filteredConsultorios.slice(indexOfFirstConsultorio, indexOfLastConsultorio);
-
+    const indexOfLast = currentPage * itemsPerPage;
+    const indexOfFirst = indexOfLast - itemsPerPage;
+    const currentItems = filteredConsultorios.slice(indexOfFirst, indexOfLast);
+    const totalPages = Math.ceil(filteredConsultorios.length / itemsPerPage);
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
     if (loading) return <div>Cargando consultorios...</div>;
@@ -153,7 +156,7 @@ const TablaConsultorios = () => {
             { key: 'consultorios', label: 'Consultorios', icon: <FaClinicMedical className="me-2" /> },
             { key: 'doctores', label: 'Doctores', icon: <FaUserMd className="me-2" /> },
         ],
-        JEFE: [
+        DOCTORA: [
             { key: 'usuarios', label: 'Usuarios', icon: <FaUserCog className="me-2" /> },
             { key: 'permisos', label: 'Permisos', icon: <FaKey className="me-2" /> },
             { key: 'servicios', label: 'Servicios', icon: <FaCogs className="me-2" /> },
@@ -171,7 +174,7 @@ const TablaConsultorios = () => {
     // Función para obtener el prefijo de ruta según el rol
     const getBasePath = (rol) => {
         if (rol === "ADMIN") return "/admin";
-        if (rol === "JEFE") return "/jefe";
+        if (rol === "DOCTORA") return "/doctora";
         if (rol === "RECEPCIONISTA") return "/recepcionista";
         return "/";
     };
@@ -186,63 +189,8 @@ const TablaConsultorios = () => {
 
     return (
         <div className="d-flex" style={{ minHeight: '100vh', backgroundColor: colorScheme.light }}>
-            {/* Sidebar */}
-            <div
-                className={`d-flex flex-column ${isMobile ? 'position-fixed' : ''}`}
-                style={{
-                    width: isMobile ? '75%' : '250px',
-                    height: '100vh',
-                    zIndex: 1000,
-                    transform: isMobile && !sidebarOpen ? 'translateX(-100%)' : 'translateX(0)',
-                    transition: 'transform 0.3s ease',
-                    backgroundColor: colorScheme.primary,
-                    color: colorScheme.light,
-                }}
-            >
-                <div className="p-3 d-flex justify-content-between align-items-center border-bottom" style={{ borderColor: colorScheme.secondary }}>
-                    <div className="d-flex align-items-center">
-                        <Link
-                            to="/admin"
-                            className="text-light text-decoration-none d-flex align-items-center"
-                            onClick={() => isMobile && setSidebarOpen(false)}
-                        >
-                            <FaUserCog className="me-2" size={24} />
-                            <h5 className="mb-0">Panel de Control</h5>
-                        </Link>
-                    </div>
-                    {isMobile && (
-                        <Button
-                            variant="link"
-                            className="p-0 text-light"
-                            onClick={() => setSidebarOpen(false)}
-                        >
-                            <FaTimes size={20} />
-                        </Button>
-                    )}
-                </div>
-
-                <Nav variant="pills" className="flex-column p-3">
-                    {menuItems.map((item) => (
-                        <Nav.Item key={item.path} className="mb-2">
-                            <Nav.Link
-                                as={Link}
-                                to={item.path}
-                                className="text-white d-flex align-items-center"
-                                style={{
-                                    backgroundColor: 'transparent',
-                                    borderRadius: '4px',
-                                    border: 'none',
-                                }}
-                                onClick={() => isMobile && setSidebarOpen(false)}
-                            >
-                                {item.icon}
-                                {item.label}
-                            </Nav.Link>
-                        </Nav.Item>
-                    ))}
-                </Nav>
-            </div>
-
+            {/* Sidebar NavBarCrud */}
+            <NavBarCrud colorScheme={colorScheme} userRol={userRol} />
             {/* Main Content */}
             <div className="flex-grow-1 p-4">
                 <h1 className="text-center mb-4">Gestión de Consultorios</h1>
@@ -270,7 +218,7 @@ const TablaConsultorios = () => {
                     )}
                 </div>
                 <div className="table-responsive shadow-sm rounded">
-                    <Table striped hover className="mb-0">
+                    <Table responsive striped hover className="mb-0">
                         <thead style={{ backgroundColor: colorScheme.primary, color: colorScheme.light }}>
                             <tr>
                                 <th>Nombre del Consultorio</th>
@@ -278,7 +226,7 @@ const TablaConsultorios = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {currentConsultorios.map((consultorio) => (
+                            {currentItems.map((consultorio) => (
                                 <tr key={consultorio._id}>
                                     <td>{consultorio.Nombre_consultorio}</td>
                                     <td>
@@ -309,58 +257,32 @@ const TablaConsultorios = () => {
                 </div>
                 <nav>
                     <ul className="pagination">
-                        {Array.from({ length: Math.ceil(filteredConsultorios.length / consultoriosPerPage) }, (_, index) => (
-                            <li key={index} className={`page-item ${currentPage === index + 1 ? 'active' : ''}`}>
-                                <button className="page-link" onClick={() => paginate(index + 1)}>
-                                    {index + 1}
-                                </button>
+                        {Array.from({ length: totalPages }, (_, i) => (
+                            <li key={i} className={`page-item ${currentPage === i + 1 ? 'active' : ''}`}>
+                                <button className="page-link" onClick={() => paginate(i + 1)}>{i + 1}</button>
                             </li>
                         ))}
                     </ul>
                 </nav>
+
+                {/* Modal de edición/creación */}
+                <ModalEditarConsultorio
+                  show={showEditModal}
+                  onHide={() => setShowEditModal(false)}
+                  onSubmit={handleSubmit}
+                  formData={formData}
+                  handleInputChange={handleInputChange}
+                  editingConsultorio={editingConsultorio}
+                />
+
+                {/* Modal de eliminación */}
+                <ModalEliminarConsultorio
+                  show={showDeleteModal}
+                  onHide={() => setShowDeleteModal(false)}
+                  onConfirm={confirmDelete}
+                  consultorioToDelete={consultorioToDelete}
+                />
             </div>
-
-            {/* Modal de edición/creación */}
-            <Modal show={showEditModal} onHide={() => setShowEditModal(false)}>
-                <Modal.Header closeButton>
-                    <Modal.Title>{editingConsultorio ? 'Editar Consultorio' : 'Crear Consultorio'}</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <Form onSubmit={handleSubmit}>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Nombre del Consultorio</Form.Label>
-                            <Form.Control
-                                type="text"
-                                name="Nombre_consultorio"
-                                value={formData.Nombre_consultorio}
-                                onChange={handleInputChange}
-                                required
-                            />
-                        </Form.Group>
-                        <Button variant="primary" type="submit">
-                            Guardar
-                        </Button>
-                    </Form>
-                </Modal.Body>
-            </Modal>
-
-            {/* Modal de eliminación */}
-            <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
-                <Modal.Header closeButton>
-                    <Modal.Title>Confirmar Eliminación</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    ¿Estás seguro de que deseas eliminar el consultorio <strong>{consultorioToDelete?.Nombre_consultorio}</strong>?
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
-                        Cancelar
-                    </Button>
-                    <Button variant="danger" onClick={confirmDelete}>
-                        Eliminar
-                    </Button>
-                </Modal.Footer>
-            </Modal>
         </div>
     );
 };

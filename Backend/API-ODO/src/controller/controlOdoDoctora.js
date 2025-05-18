@@ -22,7 +22,7 @@ export const CreateDoctora = [
 
 export const BuscarDoctora = async (req, res) => {
   try {
-    const data = await doctoraSchema.find(); 
+    const data = await doctoraSchema.find().populate('Id_consultorio');
     res.json(data); 
   } catch (error) {
     res.status(500).json({ message: error.message });

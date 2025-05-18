@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import PrivateRoute from './components/PrivateRoute';
 import TablaUsuarios from './components/TablaUser';
@@ -18,8 +17,9 @@ import Nosotros from './pages/Nosotros';
 
 // Páginas de paciente
 import Perfil from './pages/Perfil';
-// import VerMiHistoria from './pages/VerMiHistoria';
-// import AgendarCitas from './pages/AgendarCitas';
+import AgendarCitas from './pages/AgedarCitas';
+import MisCitas from './pages/MisCitas';
+import VerMiHistoria from './pages/VerMiHistoria';
 
 const App = () => {
   return (
@@ -31,9 +31,10 @@ const App = () => {
         <Route path="/nosotros" element={<Nosotros />} /> 
 
         {/* Páginas para PACIENTE */}
-        {/* <Route path="/ver-mi-historia" element={<VerMiHistoria />} />
-        <Route path="/agendar-citas" element={<AgendarCitas />} /> */}
+        <Route path="/ver-mi-historia" element={<VerMiHistoria />} />
         <Route path="/perfil" element={<Perfil />} />
+        <Route path="/agendar-cita" element={<AgendarCitas />} />
+        <Route path="/mis-citas" element={<MisCitas />} />
 
         {/* Rutas para ADMIN */}
         <Route path="/admin/usuarios" element={
@@ -58,35 +59,38 @@ const App = () => {
           <PrivateRoute roles={["ADMIN"]}><TablaHistoriales /></PrivateRoute>
         } />
 
-        {/* Rutas para JEFE (también puede acceder un ADMIN) */}
-        <Route path="/jefe/usuarios" element={
-          <PrivateRoute roles={["JEFE", "ADMIN"]}><TablaUsuarios /></PrivateRoute>
+        {/* Rutas para DOCTORA (antes JEFE, también puede acceder un ADMIN) */}
+        <Route path="/doctora/usuarios" element={
+          <PrivateRoute roles={["DOCTORA", "ADMIN"]}><TablaUsuarios /></PrivateRoute>
         } />
-        <Route path="/jefe/permisos" element={
-          <PrivateRoute roles={["JEFE", "ADMIN"]}><TablaPermisos /></PrivateRoute>
+        <Route path="/doctora/permisos" element={
+          <PrivateRoute roles={["DOCTORA", "ADMIN"]}><TablaPermisos /></PrivateRoute>
         } />
-        <Route path="/jefe/servicios" element={
-          <PrivateRoute roles={["JEFE", "ADMIN"]}><TablaServicios /></PrivateRoute>
+        <Route path="/doctora/servicios" element={
+          <PrivateRoute roles={["DOCTORA", "ADMIN"]}><TablaServicios /></PrivateRoute>
         } />
-        <Route path="/jefe/historiales" element={
-          <PrivateRoute roles={["JEFE", "ADMIN"]}><TablaHistoriales /></PrivateRoute>
+        <Route path="/doctora/historiales" element={
+          <PrivateRoute roles={["DOCTORA", "ADMIN"]}><TablaHistoriales /></PrivateRoute>
         } />
-        <Route path="/jefe/consultorios" element={
-          <PrivateRoute roles={["JEFE", "ADMIN"]}><TablaConsultorios /></PrivateRoute>
+        <Route path="/doctora/consultorios" element={
+          <PrivateRoute roles={["DOCTORA", "ADMIN"]}><TablaConsultorios /></PrivateRoute>
         } />
-        <Route path="/jefe/doctores" element={
-          <PrivateRoute roles={["JEFE", "ADMIN"]}><TablaDoctores /></PrivateRoute>
+        <Route path="/doctora/doctores" element={
+          <PrivateRoute roles={["DOCTORA", "ADMIN"]}><TablaDoctores /></PrivateRoute>
+        } />
+        <Route path="/doctora/citas" element={
+          <PrivateRoute roles={["DOCTORA", "ADMIN"]}><TablaCitas /></PrivateRoute>
         } />
 
-        {/* Rutas para RECEPCIONISTA (también puede acceder un JEFE o ADMIN) */}
+        {/* Rutas para RECEPCIONISTA (también puede acceder un DOCTORA o ADMIN) */}
         <Route path="/recepcionista/usuarios" element={
-          <PrivateRoute roles={["RECEPCIONISTA", "JEFE", "ADMIN"]}><TablaUsuarios /></PrivateRoute>
+          <PrivateRoute roles={["RECEPCIONISTA", "DOCTORA", "ADMIN"]}><TablaUsuarios /></PrivateRoute>
         } />
         <Route path="/recepcionista/historiales" element={
-          <PrivateRoute roles={["RECEPCIONISTA", "JEFE", "ADMIN"]}><TablaHistoriales /></PrivateRoute>
+          <PrivateRoute roles={["RECEPCIONISTA", "DOCTORA", "ADMIN"]}><TablaHistoriales /></PrivateRoute>
         } />
         <Route path="/recepcionista/consultorios" element={
-          <PrivateRoute roles={["RECEPCIONISTA", "JEFE", "ADMIN"]}><TablaConsultorios /></PrivateRoute>
+          <PrivateRoute roles={["RECEPCIONISTA", "DOCTORA", "ADMIN"]}><TablaConsultorios /></PrivateRoute>
         } />
 
         {/* Ruta de registro */}
