@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import api from '../API/axiosInstance'; // Usa la instancia de Axios personalizada
 import { Link, useLocation } from 'react-router-dom';
-import { FaUserCog, FaKey, FaEdit, FaTrash, FaCogs, FaCalendarAlt, FaFileMedical, FaClinicMedical, FaUserMd, FaTimes, FaCheckCircle } from 'react-icons/fa';
+import { FaUserCog, FaKey, FaEdit, FaTrash, FaCogs, FaCalendarAlt, FaFileMedical, FaClinicMedical, FaUserMd, FaTimes, FaCheckCircle, FaFileExcel } from 'react-icons/fa';
 import { Button, Table, Modal, Form, Nav } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { AuthContext } from '../contexts/AuthContext';
@@ -9,6 +9,8 @@ import { tienePermiso } from '../utils/roles'; // <-- Importa la función de per
 import NavBarCrud from './NavBar/NavBarCrud';
 import { ModalEditarCita, ModalEliminarCita } from './Modales/ModalCita';
 import '../styles/globalTableStyles.css';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 
 const API_URL = '/citas'; // Ya no necesitas el host, la instancia lo tiene
 
@@ -72,6 +74,8 @@ const TablaCitas = () => {
         light: '#ecf0f1',
         dark: '#2c3e50',
     };
+
+    const [successMsg, setSuccessMsg] = useState('');
 
     useEffect(() => {
         const handleResize = () => {
@@ -237,11 +241,38 @@ const TablaCitas = () => {
 
     const confirmarAsistencia = async (citaId) => {
         try {
-            await api.patch(`/citas/${citaId}/confirmar`);
+            const res = await api.patch(`/citas/${citaId}/confirmar`);
+            setSuccessMsg(res.data.message || 'Asistencia confirmada');
             fetchCitas();
+            setTimeout(() => setSuccessMsg(''), 4000);
         } catch (error) {
             setError('Error al confirmar la asistencia');
         }
+    };
+
+    // Función para exportar a Excel
+    const exportarExcel = () => {
+        const wsData = [
+            ['Documento', 'Nombre', 'Apellido', 'Servicio', 'Doctora', 'Consultorio', 'Fecha', 'Hora'],
+            ...currentItems.map(cita => [
+                cita.documentoCliente,
+                cita.nombreCliente,
+                cita.apellidoCliente,
+                servicios.find(s => s._id === (cita.servicios?._id || cita.servicios))?.Nombre || 'Sin asignar',
+                (() => {
+                    const doc = doctoras.find(d => d._id === (cita.doctora?._id || cita.doctora));
+                    return doc ? `${doc.Nombres} ${doc.Apellidos}` : 'Sin asignar';
+                })(),
+                consultorios.find(c => c._id === (cita.consultorio?._id || cita.consultorio))?.Nombre_consultorio || 'Sin asignar',
+                cita.fecha ? cita.fecha.split('T')[0] : 'N/A',
+                cita.hora || 'N/A',
+            ])
+        ];
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        XLSX.utils.book_append_sheet(wb, ws, 'Citas');
+        const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        saveAs(new Blob([excelBuffer], { type: 'application/octet-stream' }), 'reporte_citas.xlsx');
     };
 
     if (loading) return <div>Cargando citas...</div>;
@@ -262,27 +293,33 @@ const TablaCitas = () => {
                         value={searchTerm}
                         onChange={handleSearch}
                     />
-                    {puedeCrear && (
-                        <Button
-                            variant="success"
-                            onClick={() => {
-                                setEditingCita(null);
-                                setFormData({
-                                    documentoCliente: '',
-                                    nombreCliente: '',
-                                    apellidoCliente: '',
-                                    servicios: '',
-                                    doctora: '',
-                                    consultorio: '',
-                                    fecha: '',
-                                    hora: '',
-                                });
-                                setShowEditModal(true);
-                            }}
-                        >
-                            Crear Nueva Cita
+                    <div>
+                        <Button variant="outline-success" className="me-2" onClick={exportarExcel}>
+                            <FaFileExcel style={{ marginRight: 6, fontSize: 18, verticalAlign: 'middle' }} />
+                            Descargar Excel
                         </Button>
-                    )}
+                        {puedeCrear && (
+                            <Button
+                                variant="success"
+                                onClick={() => {
+                                    setEditingCita(null);
+                                    setFormData({
+                                        documentoCliente: '',
+                                        nombreCliente: '',
+                                        apellidoCliente: '',
+                                        servicios: '',
+                                        doctora: '',
+                                        consultorio: '',
+                                        fecha: '',
+                                        hora: '',
+                                    });
+                                    setShowEditModal(true);
+                                }}
+                            >
+                                Crear Nueva Cita
+                            </Button>
+                        )}
+                    </div>
                 </div>
                 <div className="table-responsive shadow-sm rounded">
                     <Table responsive striped hover className="mb-0">
@@ -386,6 +423,14 @@ const TablaCitas = () => {
                   onConfirm={confirmDelete}
                   citaToDelete={citaToDelete}
                 />
+
+                {successMsg && (
+                    <div style={{ position: 'fixed', top: 80, right: 30, zIndex: 9999 }}>
+                        <div className="alert alert-success" role="alert">
+                            {successMsg}
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -68,7 +68,8 @@ const fecha = Joi.date()
     const dayOfWeek = moment(value).day();
     const hora = helpers.state.ancestors[0].hora;
     const servicio = helpers.state.ancestors[0].servicio || helpers.state.ancestors[0].servicios;
-    // Si el servicio es ortodoncia (puedes ajustar el ID o nombre según tu modelo)
+    const doctoraCargo = helpers.state.ancestors[0].doctoraCargo || '';
+    // Si el servicio es ortodoncia
     if (servicio && (servicio === 'ortodoncia' || servicio.Nombre === 'Ortodoncia')) {
       if (dayOfWeek !== 4) {
         return helpers.message('Las citas para ortodoncia solo están disponibles los jueves.');
@@ -84,9 +85,32 @@ const fecha = Joi.date()
         return helpers.message('Las citas de ortodoncia deben ser en intervalos de 20 minutos (00, 20, 40).');
       }
     } else {
+      // Odontóloga general no puede atender ortodoncia
+      if (servicio && (servicio === 'ortodoncia' || servicio.Nombre === 'Ortodoncia')) {
+        return helpers.message('La odontóloga general no puede atender ortodoncia.');
+      }
       // Restricción para otros servicios
-      if (hora < '11:00' || hora > '19:00') {
-        return helpers.message('El horario para otros servicios es de 11 AM a 7 PM.');
+      const [horaStr, minStr] = hora.split(':');
+      const horaNum = parseInt(horaStr, 10);
+      if (dayOfWeek === 0) {
+        return helpers.message('No se atienden citas los domingos.');
+      }
+      if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+        if (horaNum < 12 || horaNum > 17 || (horaNum === 17 && minStr !== '00')) {
+          return helpers.message('Horario de odontología general: lun-vie 12:00 a 17:00.');
+        }
+        const minutosValidos = ['00', '40'];
+        if (!minutosValidos.includes(minStr)) {
+          return helpers.message('Intervalos válidos: cada 40 minutos o 1 hora (00, 40).');
+        }
+      }
+      if (dayOfWeek === 6) {
+        if (horaNum < 12 || horaNum > 15 || (horaNum === 15 && minStr !== '00')) {
+          return helpers.message('Horario de odontología general: sábados 12:00 a 15:00.');
+        }
+        if (minStr !== '00') {
+          return helpers.message('Los sábados solo se permiten intervalos de 1 hora (00).');
+        }
       }
     }
     return value;

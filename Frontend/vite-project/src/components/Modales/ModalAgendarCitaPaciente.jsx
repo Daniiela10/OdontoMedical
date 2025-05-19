@@ -25,6 +25,7 @@ const ModalAgendarCitaPaciente = ({
   const [usarDatosUsuario, setUsarDatosUsuario] = useState(false);
   const [loadingDatos, setLoadingDatos] = useState(false);
   const [horasDisponibles, setHorasDisponibles] = useState([]);
+  const [fechaInvalida, setFechaInvalida] = useState(false);
 
   // Autocompletar datos del usuario si el checkbox está marcado
   useEffect(() => {
@@ -58,8 +59,16 @@ const ModalAgendarCitaPaciente = ({
     // eslint-disable-next-line
   }, [usarDatosUsuario, user]);
 
-  // Filtrar doctoras según el servicio seleccionado (si hay relación)
-  const doctorasFiltradas = doctoras;
+  // Filtrar doctoras según el servicio seleccionado
+  const esOrtodoncia = servicio && (servicio.Nombre === 'Ortodoncia' || servicio.nombre === 'Ortodoncia');
+  const doctorasFiltradas = doctoras.filter(doc => {
+    const cargo = (doc.Cargo || '').toLowerCase();
+    if (esOrtodoncia) {
+      return cargo.includes('ortodoncista');
+    } else {
+      return cargo.includes('odontóloga') || cargo.includes('odontologa');
+    }
+  });
 
   // Filtrar consultorios según la doctora seleccionada
   const consultoriosFiltrados = doctoras.length && form.doctora
@@ -76,38 +85,73 @@ const ModalAgendarCitaPaciente = ({
     }
   }, [form.doctora, doctoras]);
 
-  // Calcular horas disponibles para ortodoncia
+  // Calcular horas disponibles según el servicio y el día seleccionado
   useEffect(() => {
-    const esOrtodoncia = servicio && (servicio.Nombre === 'Ortodoncia' || servicio.nombre === 'Ortodoncia');
-    if (esOrtodoncia && form.fecha) {
-      const fetchHorasOcupadas = async () => {
-        try {
-          const fechaISO = new Date(form.fecha).toISOString().split('T')[0];
-          const res = await api.get('/citas');
-          const ocupadas = (res.data.data || res.data || []).filter(cita => {
-            return (
-              (cita.servicios?._id === servicio._id || cita.servicios === servicio._id) &&
-              cita.fecha && cita.fecha.split('T')[0] === fechaISO
-            );
-          }).map(cita => cita.hora);
-          // Generar intervalos de 20 minutos entre 13:00 y 19:00
-          const horas = [];
-          for (let h = 13; h <= 19; h++) {
-            for (let m of [0, 20, 40]) {
-              if (h === 19 && m > 0) continue;
-              const horaStr = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
-              if (!ocupadas.includes(horaStr)) horas.push(horaStr);
-            }
-          }
-          setHorasDisponibles(horas);
-        } catch {
-          setHorasDisponibles([]);
-        }
-      };
-      fetchHorasOcupadas();
-    } else {
+    if (!form.fecha) {
       setHorasDisponibles([]);
+      setFechaInvalida(false);
+      return;
     }
+    const fechaObj = new Date(form.fecha + 'T00:00:00-05:00'); // Bogotá timezone
+    const day = fechaObj.getUTCDay(); // 0=domingo, 4=jueves
+    let horas = [];
+    if (esOrtodoncia) {
+      if (day !== 4) {
+        setHorasDisponibles([]);
+        setFechaInvalida(true);
+        return;
+      }
+      setFechaInvalida(false);
+      for (let h = 13; h <= 19; h++) {
+        for (let m of [0, 20, 40]) {
+          if (h === 19 && m > 0) continue;
+          const horaStr = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+          horas.push(horaStr);
+        }
+      }
+    } else {
+      setFechaInvalida(false);
+      if (day === 0) {
+        setHorasDisponibles([]);
+        return;
+      }
+      if (day >= 1 && day <= 5) {
+        for (let h = 12; h <= 17; h++) {
+          for (let m of [0, 40]) {
+            if (h === 17 && m !== 0) continue;
+            const horaStr = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+            horas.push(horaStr);
+          }
+        }
+      }
+      if (day === 6) {
+        for (let h = 12; h <= 15; h++) {
+          if (h === 15) {
+            horas.push('15:00');
+          } else {
+            horas.push(`${h.toString().padStart(2, '0')}:00`);
+          }
+        }
+      }
+    }
+    // Filtrar horas ocupadas
+    const fetchHorasOcupadas = async () => {
+      try {
+        const fechaISO = fechaObj.toISOString().split('T')[0];
+        const res = await api.get('/citas');
+        const ocupadas = (res.data.data || res.data || []).filter(cita => {
+          return (
+            (cita.servicios?._id === servicio._id || cita.servicios === servicio._id) &&
+            cita.fecha && cita.fecha.split('T')[0] === fechaISO
+          );
+        }).map(cita => cita.hora);
+        setHorasDisponibles(horas.filter(h => !ocupadas.includes(h)));
+      } catch {
+        setHorasDisponibles(horas);
+      }
+    };
+    fetchHorasOcupadas();
+    // eslint-disable-next-line
   }, [servicio, form.fecha]);
 
   const handleChange = e => {
@@ -214,34 +258,34 @@ const ModalAgendarCitaPaciente = ({
                 const today = new Date();
                 return today.toISOString().split('T')[0];
               })()}
-              pattern={servicio && (servicio.Nombre === 'Ortodoncia' || servicio.nombre === 'Ortodoncia') ? "[0-9]{4}-[0-9]{2}-[0-9]{2}" : undefined}
+              pattern={esOrtodoncia ? "[0-9]{4}-[0-9]{2}-[0-9]{2}" : undefined}
               onInput={e => {
-                if (servicio && (servicio.Nombre === 'Ortodoncia' || servicio.nombre === 'Ortodoncia')) {
+                if (esOrtodoncia) {
                   const d = new Date(e.target.value + 'T00:00:00-05:00');
-                  // Usar Intl.DateTimeFormat para Colombia
-                  const diaSemana = new Intl.DateTimeFormat('es-CO', { weekday: 'short', timeZone: 'America/Bogota' }).format(d);
-                  // Jueves en español puede ser 'jue.' o 'jueves' según navegador, así que aceptamos ambos
-                  if (!(diaSemana.toLowerCase().startsWith('jue'))) {
+                  const day = d.getUTCDay();
+                  if (day !== 4) {
                     e.target.setCustomValidity('Solo puedes seleccionar jueves para ortodoncia');
                   } else {
                     e.target.setCustomValidity('');
                   }
                 }
               }}
+              disabled={esOrtodoncia ? false : undefined}
             />
+            {fechaInvalida && esOrtodoncia && (
+              <div style={{ color: '#d9534f', fontSize: 14, marginTop: 4 }}>
+                Solo puedes seleccionar jueves para ortodoncia.
+              </div>
+            )}
           </Form.Group>
           <Form.Group className="mb-3">
             <Form.Label>Hora</Form.Label>
-            {servicio && (servicio.Nombre === 'Ortodoncia' || servicio.nombre === 'Ortodoncia') ? (
-              <Form.Select name="hora" value={form.hora} onChange={handleChange} required>
-                <option value="">Seleccione una hora</option>
-                {horasDisponibles.map(h => (
-                  <option key={h} value={h}>{h}</option>
-                ))}
-              </Form.Select>
-            ) : (
-              <Form.Control type="time" name="hora" value={form.hora} onChange={handleChange} required />
-            )}
+            <Form.Select name="hora" value={form.hora} onChange={handleChange} required disabled={horasDisponibles.length === 0}>
+              <option value="">Seleccione una hora</option>
+              {horasDisponibles.map(h => (
+                <option key={h} value={h}>{h}</option>
+              ))}
+            </Form.Select>
           </Form.Group>
         </Modal.Body>
         <Modal.Footer>
